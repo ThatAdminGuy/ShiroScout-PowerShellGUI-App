@@ -28,15 +28,15 @@
 
 ### I think there are close to 150 references I could add, but in general I would like to thank ALL people who post their learning, findings, testing, Home IT Labs, and share knowledge online as it is an invaluable tool of sharing that has helped code, automation and many other areas of our entire world as we know it.
 
-ABOUT: Shiro the Indian Boy
+### ABOUT: Shiro the Indian Boy
 
-Shiro is a happy boy. He loves his mom, dad, and sisters. He helps in the community. His world is bliss and he is happy and content in it.
+### Shiro is a happy boy. He loves his mom, dad, and sisters. He helps in the community. His world is bliss and he is happy and content in it.
 
-Shiro Scout was created by myself because of inspiration from Apache Shiro and their use of: Domains, Regions, Entities. So, Shiro the protector of Realms was my thought.
+### Shiro Scout was created by myself because of inspiration from Apache Shiro and their use of: Domains, Regions, Entities. So, Shiro the protector of Realms was my thought.
 
-Scout because he would Scout the Regions looking for Danger, or potential enemies.
+### Scout because he would Scout the Regions looking for Danger, or potential enemies.
 
-The photo of Shiro Scout was originally different, but I wanted a mascot picture and logo for Shiro Scout Usage on projects. I used MidJourney, and Shiro Scout was born in Graphical Representation in about 20 seconds using specific text-prompts.
+### The photo of Shiro Scout was originally different, but I wanted a mascot picture and logo for Shiro Scout Usage on projects. I used MidJourney, and Shiro Scout was born in Graphical Representation in about 20 seconds using specific text-prompts.
 
 ![A person smiling for the camera Description automatically generated with medium confidence](media/c3b25b148d6d7434af8faa0727c02e56.png)
 
