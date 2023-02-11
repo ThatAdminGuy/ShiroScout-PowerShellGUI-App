@@ -1,0 +1,3463 @@
+
+# Shiro Scout App Info
+$ApplicationName = "ShiroScout"
+$ApplicationVersion = "0.0.0.1"
+$ApplicationLastUpdate = "01/1/2023"
+
+# Author Info
+$AuthorName = "Wayne Lowry Burlingame"
+$AuthorEmail = "shiroscout@gmail.com"
+$AuthorBlogName = "wayneburlingame"
+$AuthorBlogURL = "https://wayneburlingame.com"
+
+
+# Text to show in the Status Bar when the form load
+$StatusBarStartUp = "$ApplicationName - $ApplicationVersion"
+
+# Default Error Action
+$ErrorActionPreference = "SilentlyContinue"
+
+# Append the transcript to an existing .log or .txt file.
+Start-Transcript -Path C:\Temp\computer.log -Append -IncludeInvocationHeader
+Copy-Item -Path C:\Temp\computer.log computer0.log
+Rename-Item -Path C:\Temp\computer0.log shiroscout.log
+"***** SHIRO SCOUT LOG FILE*****" | Out-File -FilePath C:\Temp\shiroscout.log -Append
+Get-Date | Out-File -FilePath C:\Temp\shiroscout.log -Append
+# RichTextBox OUTPUT form
+#  Output Default Parameters
+$richtextbox1_output_DefaultFontFamily = "Lucida Console"
+$richtextbox1_output_DefaultFontSize = "8"
+$richtextbox1_output_DefaultFont = New-Object System.Drawing.Font ($richtextbox1_output_DefaultFontFamily, $richtextbox1_output_DefaultFontSize)
+#$global:richtextbox_output_DefaultFont.Bold = $false
+
+#  Title Default Parameters
+$richtextbox1_output_TitleFontFamily = "Lucida Console"
+$richtextbox1_output_TitleFontSize = "10"
+$richtextbox1_output_TitleFont = New-Object System.Drawing.Font ($richtextbox1_output_TitleFontFamily, $richtextbox1_output_TitleFontSize)
+
+# RichTextBox LOGS form
+#  Message to show when the form load
+$RichTexBox1LogsDefaultMessage = "Welcome on $ApplicationName $LAKVersion - Visit my website: $AuthorBlogURL"
+
+
+
+$OnLoadFormEvent = {
+	# Set the status bar name
+	$statusbar1.Text = $StatusBarStartUp
+	
+	
+	$form_MainForm.Text = $MainFormTitle
+	$textbox_computername.Text = $env:COMPUTERNAME
+	Add-Logs -text $RichTexBox1LogsDefaultMessage
+	
+	# Load the Computers list from $ComputersList
+	if (Test-Path $ComputersList_File)
+	{
+		Add-logs -text "Computers List loaded - $($ComputersList.Count) Items - File: $ComputersList_File" -ErrorAction 'SilentlyContinue'
+		$textbox_computername.AutoCompleteCustomSource.AddRange($ComputersList)
+	} #end if (Test-Path $ComputersList
+	else
+	{
+		Add-Logs -text "No Computers List found at the following location: $ComputersList_File" -ErrorAction 'SilentlyContinue'
+	}
+}
+
+
+
+# SCRIPTS
+
+# WMIExplore.ps1 - http://thepowershellguy.com
+if (Test-Path "$ScriptsFolder\WMIExplorer.ps1" -ErrorAction 'SilentlyContinue')
+{
+	$ToolStripMenuItem_WMIExplorer.ForeColor = 'green'
+	Add-Logs -text "External Script check - WMIExplorer.ps1 found"
+}
+else
+{
+	$ToolStripMenuItem_WMIExplorer.ForeColor = 'Red'; $ToolStripMenuItem_WMIExplorer.enabled = $false
+	Add-Logs -text "External Script check - WMIExplorer.ps1 not found - Button Disabled"
+}
+
+# SYDI-Server.vbs - http://sydiproject.com/
+if (Test-Path "$ScriptsFolder\Sydi-Server.vbs" -ErrorAction 'SilentlyContinue')
+{
+	$button_SYDIGo.ForeColor = 'green'
+	Add-Logs -text "External Script check - Sydi-Server.vbs found"
+}
+else
+{
+	$button_SYDIGo.enabled = $false
+	$combobox_sydi_format.Enabled = $false
+	$textbox_sydi_arguments.Enabled = $false
+	Add-Logs -text "External Script check - Sydi-Server.vbs not found - Button Disabled"
+}
+
+
+
+$ToolStripMenuItem_AboutInfo_Click = { Show-About_psf }
+
+
+
+
+
+
+
+
+############################################################################
+## PRE FORM LOAD
+## LOAD Execution information of the script. Does not track every button action.
+## Transcript is a built-in tool of powershell.
+## It is a basic logging tool.
+############################################################################
+Microsoft.PowerShell.Host\Start-Transcript -APPEND -Path "C:\Temp\Computer.log" -IncludeInvocationHeader 
+
+
+## Install module PSot
+#Import Modules & Snap-ins
+WriteLog "Installing PShot Module..."
+PowerShellGet\Install-Module -Name PShot 
+
+
+
+
+## DOT SOURCING ALL PSscriptroot and sub-folders PS1 Files
+## The package .MSI may include sub-foldersin the installation directory where extra and3rd party tools are places.
+## The PSScript root does a check on what is available and preloads them.
+foreach ($file in Microsoft.PowerShell.Management\Get-ChildItem $PSScriptRoot\*.ps1) {
+	$ExecutionContext.InvokeCommand.InvokeScript(
+		$false,
+		(
+			[scriptblock]::Create(
+				[io.file]::ReadAllText(
+					$file.FullName,
+					[Text.Encoding]::UTF8
+				)
+			)
+		),
+		$null,
+		$null
+	)
+}
+
+
+## END PRE FORM LOAD CODE
+
+#############################################################################
+## FORM LOAD
+#############################################################################
+
+
+$MainForm_Load={
+#TODO: Initialize Form Controls here
+	$OnLoadFormEvent = {
+		# Set the status bar name
+		$statusbar1.Text = $StatusBarStartUp
+	}
+}
+## END FORM LOAD
+
+###################
+# .NET Framework Assemblies
+## Here is where assembly files can be referenced and added.
+## It is suggested to only add newer assembly files with strong names and not to do so causes errors,
+## as well as the app will need to be updated to reflect end-of-life and out-of-date files.
+###################
+Microsoft.PowerShell.Utility\Add-Type -AssemblyName PresentationFramework | Microsoft.PowerShell.Core\Out-Null
+Microsoft.PowerShell.Utility\Add-Type -AssemblyName System.Windows.Forms | Microsoft.PowerShell.Core\Out-Null
+Microsoft.PowerShell.Utility\Add-Type -AssemblyName System.Drawing | Microsoft.PowerShell.Core\Out-Null
+Microsoft.PowerShell.Utility\Add-Type -AssemblyName PresentationCore | Microsoft.PowerShell.Core\Out-Null
+Microsoft.PowerShell.Utility\Add-Type -AssemblyName Microsoft.PowerShell.Commands.Management | Microsoft.PowerShell.Core\Out-Null
+Microsoft.PowerShell.Utility\Add-Type -AssemblyName PresentationFramework-SystemXml | Microsoft.PowerShell.Core\Out-Null
+Microsoft.PowerShell.Utility\Add-Type -AssemblyName UIAutomationTypes | Microsoft.PowerShell.Core\Out-Null
+Microsoft.PowerShell.Utility\Add-Type -AssemblyName System.Dynamic | Microsoft.PowerShell.Core\Out-Null
+Microsoft.PowerShell.Utility\Add-Type -AssemblyName WindowsBase | Microsoft.PowerShell.Core\Out-Null
+Microsoft.PowerShell.Utility\Add-Type -AssemblyName UIAutomationProvider | Microsoft.PowerShell.Core\Out-Null
+Microsoft.PowerShell.Utility\Add-Type -AssemblyName System.Windows.Controls.DataVisualization.Toolkit | Microsoft.PowerShell.Core\Out-Null
+
+
+
+###################
+# Constants
+###################
+#$xamlFile = "MainWindow.xaml"
+
+##################################################################################
+## IMPORT ASSEMBLIES SECTION
+## Here you use these commands to import the assembly files.
+##################################################################################
+#----------------------------------------------
+#region Import Assemblies
+#----------------------------------------------
+[void][Reflection.Assembly]::Load("System, Version=2.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089")
+[void][Reflection.Assembly]::Load("System.Windows.Forms, Version=2.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089")
+[void][Reflection.Assembly]::Load("System.Drawing, Version=2.0.0.0, Culture=neutral, PublicKeyToken=b03f5f7f11d50a3a")
+[void][Reflection.Assembly]::Load("mscorlib, Version=2.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089")
+[void][Reflection.Assembly]::Load("System.Data, Version=2.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089")
+[void][Reflection.Assembly]::Load("System.Windows.Controls.DataVisualization.Toolkit, Version=4.0.0.0, Culture=neutral, PublicKeyToken=null")
+
+
+
+
+
+#endregion Import Assemblies
+## TESTING AREA for assembly files
+## This is a testing area to add files for testing and makes it easy to remove them if needed.
+# Custom additions for testing can belisted here. Delete if cause issues
+
+
+
+$ContextMenuStrip_Click={
+	#TODO: Place custom script here
+	
+}
+
+$contextmenustrip1_Opening=[System.ComponentModel.CancelEventHandler]{
+#Event Argument: $_ = [System.ComponentModel.CancelEventArgs]
+	#TODO: Place custom script here
+	
+}
+
+$flowlayoutpanel1_Paint=[System.Windows.Forms.PaintEventHandler]{
+#Event Argument: $_ = [System.Windows.Forms.PaintEventArgs]
+	#TODO: Place custom script here
+	
+}
+
+$StartHere_SelectedIndexChanged={
+	#TODO: Place custom script here
+	# TAB Button on Menu
+}
+
+$MainMenu_ItemClicked=[System.Windows.Forms.ToolStripItemClickedEventHandler]{
+#Event Argument: $_ = [System.Windows.Forms.ToolStripItemClickedEventArgs]
+	#TODO: Place custom script here
+	
+}
+
+
+
+## ENHANCEMENTS for Viewing and Chart Controls below.
+<#
+	.SYNOPSIS
+		Sets the emulation of the WebBrowser control for the application.
+	
+	.DESCRIPTION
+		Sets the emulation of the WebBrowser control for the application using the installed version of IE.
+		This improves the WebBrowser control compatibility with newer html features.
+	
+	.PARAMETER ExecutableName
+		The name of the executable E.g. PowerShellStudio.exe.
+		Default Value: The running executable name.
+	
+	.EXAMPLE
+		PS C:\> Set-WebBrowserEmulation
+
+	.EXAMPLE
+		PS C:\> Set-WebBrowserEmulation PowerShell.exe
+#>
+function Set-WebBrowserEmulation
+{
+	param
+	(
+		[ValidateNotNullOrEmpty()]
+		[string]
+		$ExecutableName = [System.IO.Path]::GetFileName([System.Diagnostics.Process]::GetCurrentProcess().MainModule.FileName)
+	)
+	
+	#region Get IE Version
+	$valueNames = 'svcVersion', 'svcUpdateVersion', 'Version', 'W2kVersion'
+	
+	$version = 0;
+	for ($i = 0; $i -lt $valueNames.Length; $i++)
+	{
+		$objVal = [Microsoft.Win32.Registry]::GetValue('HKEY_LOCAL_MACHINE\SOFTWARE\Microsoft\Edge', $valueNames[$i], '0')
+		$strVal = [System.Convert]::ToString($objVal)
+		if ($strVal)
+		{
+			$iPos = $strVal.IndexOf('.')
+			if ($iPos -gt 0)
+			{
+				$strVal = $strVal.Substring(0, $iPos)
+			}
+			
+			$res = 0;
+			if ([int]::TryParse($strVal, [ref]$res))
+			{
+				$version = [Math]::Max($version, $res)
+			}
+		}
+	}
+	
+	if ($version -lt 7)
+	{
+		$version = 7000
+	}
+	else
+	{
+		$version = $version * 1000
+	}
+	#endregion
+	
+	[Microsoft.Win32.Registry]::SetValue('HKEY_CURRENT_USER\SOFTWARE\Microsoft\Internet Explorer\Main\FeatureControl\FEATURE_BROWSER_EMULATION', $ExecutableName, $version)
+}
+
+###################################################################################################
+## CHART CONTROLS 
+###################################################################################################
+
+function Update-Chart
+{
+<#
+	.SYNOPSIS
+		This functions helps you plot points on a chart
+	
+	.DESCRIPTION
+		Use the function to plot points on a chart or add more charts to a chart control
+	
+	.PARAMETER ChartControl
+		The Chart Control you when to add points to
+	
+	.PARAMETER XPoints
+		Set the X Axis Points. These can be strings or numerical values.
+	
+	.PARAMETER YPoints
+		Set the Y Axis Points. These can be strings or numerical values.
+	
+	.PARAMETER XTitle
+		Set the Title for the X Axis.
+	
+	.PARAMETER YTitle
+		Set the Title for the Y Axis.
+	
+	.PARAMETER Title
+		Set the Title for the chart.
+	
+	.PARAMETER ChartType
+		Set the Style of the chart. See System.Windows.Forms.DataVisualization.Charting.SeriesChartType Enum
+	
+	.PARAMETER SeriesIndex
+		Set the settings of a particular Series and corresponding ChartArea
+	
+	.PARAMETER TitleIndex
+		Set the settings of a particular Title
+	
+	.PARAMETER SeriesName
+		Set the settings of a particular Series using its name and corresponding ChartArea.
+		The Series will be created if not found.
+		If SeriesIndex is set, it will replace the Series' name if the Series does not exist
+	.PARAMETER Enable3D
+		The chart will be rendered in 3D.
+	
+	.PARAMETER Disable3D
+		The chart will be rendered in 2D.
+	
+	.PARAMETER AppendNew
+		When this switch is used, a new ChartArea is added to Chart Control.
+	
+	.NOTES
+		Additional information about the function.
+	
+	.LINK
+		http://www.sapien.com/blog/2011/05/05/primalforms-2011-designing-charts-for-powershell/
+#>
+	
+	param
+	(
+		[Parameter(Mandatory = $true,
+				   Position = 1)]
+		[ValidateNotNull()]
+		[System.Windows.Forms.DataVisualization.Charting.Chart]
+		$ChartControl,
+		[Parameter(Mandatory = $true,
+				   Position = 2)]
+		[ValidateNotNull()]
+		$XPoints,
+		[Parameter(Mandatory = $true,
+				   Position = 3)]
+		$YPoints,
+		[Parameter(Mandatory = $false,
+				   Position = 4)]
+		[string]
+		$XTitle,
+		[Parameter(Mandatory = $false,
+				   Position = 5)]
+		[string]
+		$YTitle,
+		[Parameter(Mandatory = $false,
+				   Position = 6)]
+		[string]
+		$Title,
+		[Parameter(Mandatory = $false,
+				   Position = 7)]
+		[System.Windows.Forms.DataVisualization.Charting.SeriesChartType]
+		$ChartType,
+		[Parameter(Mandatory = $false,
+				   Position = 8)]
+		$SeriesIndex = '-1',
+		[Parameter(Mandatory = $false,
+				   Position = 9)]
+		[int]$TitleIndex = 0,
+		[Parameter(Mandatory = $false)]
+		[string]
+		$SeriesName = $null,
+		[switch]
+		$Enable3D,
+		[switch]
+		$Disable3D,
+		[switch]
+		$AppendNew
+	)
+	
+	$ChartAreaIndex = 0
+	if ($AppendNew)
+	{
+		$name = "ChartArea " + ($ChartControl.ChartAreas.Count + 1).ToString();
+		$ChartArea = $ChartControl.ChartAreas.Add($name)
+		$ChartAreaIndex = $ChartControl.ChartAreas.Count - 1
+		
+		$name = "Series " + ($ChartControl.Series.Count + 1).ToString();
+		$Series = $ChartControl.Series.Add($name)
+		$SeriesIndex = $ChartControl.Series.Count - 1
+		
+		$Series.ChartArea = $ChartArea.Name
+		
+		if ($Title)
+		{
+			$name = "Title " + ($ChartControl.Titles.Count + 1).ToString();
+			$TitleObj = $ChartControl.Titles.Add($Title)
+			$TitleIndex = $ChartControl.Titles.Count - 1
+			$TitleObj.DockedToChartArea = $ChartArea.Name
+			$TitleObj.IsDockedInsideChartArea = $false
+		}
+	}
+	else
+	{
+		if ($ChartControl.ChartAreas.Count -eq 0)
+		{
+			$name = "ChartArea " + ($ChartControl.ChartAreas.Count + 1).ToString();
+			[void]$ChartControl.ChartAreas.Add($name)
+			$ChartAreaIndex = $ChartControl.ChartAreas.Count - 1
+		}
+		
+		if ($ChartControl.Series.Count -eq 0)
+		{
+			if (-not $SeriesName)
+			{
+				$SeriesName = "Series " + ($ChartControl.Series.Count + 1).ToString();
+			}
+			
+			$Series = $ChartControl.Series.Add($SeriesName)
+			$SeriesIndex = $ChartControl.Series.Count - 1
+			$Series.ChartArea = $ChartControl.ChartAreas[$ChartAreaIndex].Name
+		}
+		elseif ($SeriesName)
+		{
+			$Series = $ChartControl.Series.FindByName($SeriesName)
+			
+			if ($null -eq $Series)
+			{
+				if (($SeriesIndex -gt -1) -and ($SeriesIndex -lt $ChartControl.Series.Count))
+				{
+					$Series = $ChartControl.Series[$SeriesIndex]
+					$Series.Name = $SeriesName
+				}
+				else
+				{
+					$Series = $ChartControl.Series.Add($SeriesName)
+					$SeriesIndex = $ChartControl.Series.Count - 1
+				}
+				
+				$Series.ChartArea = $ChartControl.ChartAreas[$ChartAreaIndex].Name
+			}
+			else
+			{
+				$SeriesIndex = $ChartControl.Series.IndexOf($Series)
+				$ChartAreaIndex = $ChartControl.ChartAreas.IndexOf($Series.ChartArea)
+			}
+		}
+	}
+	
+	if (($SeriesIndex -lt 0) -or ($SeriesIndex -ge $ChartControl.Series.Count))
+	{
+		$SeriesIndex = 0
+	}
+	
+	$Series = $ChartControl.Series[$SeriesIndex]
+	$Series.Points.Clear()
+	$ChartArea = $ChartControl.ChartAreas[$Series.ChartArea]
+	
+	if ($Enable3D)
+	{
+		$ChartArea.Area3DStyle.Enable3D = $true
+	}
+	elseif ($Disable3D)
+	{
+		$ChartArea.Area3DStyle.Enable3D = $false
+	}
+	
+	if ($Title)
+	{
+		if ($ChartControl.Titles.Count -eq 0)
+		{
+			
+			#$name = "Title " + ($ChartControl.Titles.Count + 1).ToString();
+			$TitleObj = $ChartControl.Titles.Add($Title)
+			$TitleIndex = $ChartControl.Titles.Count - 1
+			$TitleObj.DockedToChartArea = $ChartArea.Name
+			$TitleObj.IsDockedInsideChartArea = $false
+		}
+		
+		$ChartControl.Titles[$TitleIndex].Text = $Title
+	}
+	
+	if ($ChartType)
+	{
+		$Series.ChartType = $ChartType
+	}
+	
+	if ($XTitle)
+	{
+		$ChartArea.AxisX.Title = $XTitle
+	}
+	
+	if ($YTitle)
+	{
+		$ChartArea.AxisY.Title = $YTitle
+	}
+	
+	if ($XPoints -isnot [Array] -or $XPoints -isnot [System.Collections.IEnumerable])
+	{
+		$array = Microsoft.PowerShell.Utility\New-Object System.Collections.ArrayList
+		$array.Add($XPoints)
+		$XPoints = $array
+	}
+	
+	if ($YPoints -isnot [Array] -or $YPoints -isnot [System.Collections.IEnumerable])
+	{
+		$array = Microsoft.PowerShell.Utility\New-Object System.Collections.ArrayList
+		$array.Add($YPoints)
+		$YPoints = $array
+	}
+	
+	$Series.Points.DataBindXY($XPoints, $YPoints)
+}
+
+
+function Clear-Chart
+{
+<#
+	.SYNOPSIS
+		This function clears the contents of the chart
+
+	.DESCRIPTION
+		Use the function to remove contents from the chart control
+
+	.PARAMETER  ChartControl
+		The Chart Control to clear
+
+	.PARAMETER  LeaveSingleChart
+		Leaves the first chart and removes all others from the control
+	
+	.LINK
+		http://www.sapien.com/blog/2011/05/05/primalforms-2011-designing-charts-for-powershell/
+#>
+	Param (	
+	[ValidateNotNull()]
+	[Parameter(Position=1,Mandatory=$true)]
+  	[System.Windows.Forms.DataVisualization.Charting.Chart]$ChartControl
+	,
+	[Parameter(Position=2, Mandatory=$false)]
+	[Switch]$LeaveSingleChart
+	)
+	
+	$count = 0	
+	if($LeaveSingleChart)
+	{
+		$count = 1
+	}
+	
+	while($ChartControl.Series.Count -gt $count)
+	{
+		$ChartControl.Series.RemoveAt($ChartControl.Series.Count - 1)
+	}
+	
+	while($ChartControl.ChartAreas.Count -gt $count)
+	{
+		$ChartControl.ChartAreas.RemoveAt($ChartControl.ChartAreas.Count - 1)
+	}
+	
+	while($ChartControl.Titles.Count -gt $count)
+	{
+		$ChartControl.Titles.RemoveAt($ChartControl.Titles.Count - 1)
+	}
+	
+	if($ChartControl.Series.Count -gt 0)
+	{
+		$ChartControl.Series[0].Points.Clear()
+	}
+}
+
+function Update-ListViewColumnSort
+{
+<#
+	.SYNOPSIS
+		Sort the ListView's item using the specified column.
+	
+	.DESCRIPTION
+		Sort the ListView's item using the specified column.
+		This function uses Add-Type to define a class that sort the items.
+		The ListView's Tag property is used to keep track of the sorting.
+	
+	.PARAMETER ListView
+		The ListView control to sort.
+	
+	.PARAMETER ColumnIndex
+		The index of the column to use for sorting.
+	
+	.PARAMETER SortOrder
+		The direction to sort the items. If not specified or set to None, it will toggle.
+	
+	.EXAMPLE
+		Update-ListViewColumnSort -ListView $listview1 -ColumnIndex 0
+	
+	.NOTES
+		Additional information about the function.
+#>
+	
+	param
+	(
+		[Parameter(Mandatory = $true)]
+		[ValidateNotNull()]
+		[System.Windows.Forms.ListView]
+		$ListView,
+		[Parameter(Mandatory = $true)]
+		[int]
+		$ColumnIndex,
+		[System.Windows.Forms.SortOrder]
+		$SortOrder = 'None'
+	)
+	
+	if (($ListView.Items.Count -eq 0) -or ($ColumnIndex -lt 0) -or ($ColumnIndex -ge $ListView.Columns.Count))
+	{
+		return;
+	}
+	
+	#region Define ListViewItemComparer
+	try
+	{
+		[ListViewItemComparer] | Microsoft.PowerShell.Core\Out-Null
+	}
+	catch
+	{
+		Microsoft.PowerShell.Utility\Add-Type -ReferencedAssemblies ('System.Windows.Forms') -TypeDefinition  @" 
+	using System;
+	using System.Windows.Forms;
+	using System.Collections;
+	public class ListViewItemComparer : IComparer
+	{
+	    public int column;
+	    public SortOrder sortOrder;
+	    public ListViewItemComparer()
+	    {
+	        column = 0;
+			sortOrder = SortOrder.Ascending;
+	    }
+	    public ListViewItemComparer(int column, SortOrder sort)
+	    {
+	        this.column = column;
+			sortOrder = sort;
+	    }
+	    public int Compare(object x, object y)
+	    {
+			if(column >= ((ListViewItem)x).SubItems.Count)
+				return  sortOrder == SortOrder.Ascending ? -1 : 1;
+		
+			if(column >= ((ListViewItem)y).SubItems.Count)
+				return sortOrder == SortOrder.Ascending ? 1 : -1;
+		
+			if(sortOrder == SortOrder.Ascending)
+	        	return String.Compare(((ListViewItem)x).SubItems[column].Text, ((ListViewItem)y).SubItems[column].Text);
+			else
+				return String.Compare(((ListViewItem)y).SubItems[column].Text, ((ListViewItem)x).SubItems[column].Text);
+	    }
+	}
+"@ | Microsoft.PowerShell.Core\Out-Null
+	}
+	#endregion
+	
+	if ($ListView.Tag -is [ListViewItemComparer])
+	{
+		#Toggle the Sort Order
+		if ($SortOrder -eq [System.Windows.Forms.SortOrder]::None)
+		{
+			if ($ListView.Tag.column -eq $ColumnIndex -and $ListView.Tag.sortOrder -eq 'Ascending')
+			{
+				$ListView.Tag.sortOrder = 'Descending'
+			}
+			else
+			{
+				$ListView.Tag.sortOrder = 'Ascending'
+			}
+		}
+		else
+		{
+			$ListView.Tag.sortOrder = $SortOrder
+		}
+		
+		$ListView.Tag.column = $ColumnIndex
+		$ListView.Sort() #Sort the items
+	}
+	else
+	{
+		if ($SortOrder -eq [System.Windows.Forms.SortOrder]::None)
+		{
+			$SortOrder = [System.Windows.Forms.SortOrder]::Ascending
+		}
+		
+		#Set to Tag because for some reason in PowerShell ListViewItemSorter prop returns null
+		$ListView.Tag = Microsoft.PowerShell.Utility\New-Object ListViewItemComparer ($ColumnIndex, $SortOrder)
+		$ListView.ListViewItemSorter = $ListView.Tag #Automatically sorts
+	}
+}
+
+
+function Add-ListViewItem
+{
+<#
+	.SYNOPSIS
+		Adds the item(s) to the ListView and stores the object in the ListViewItem's Tag property.
+
+	.DESCRIPTION
+		Adds the item(s) to the ListView and stores the object in the ListViewItem's Tag property.
+
+	.PARAMETER ListView
+		The ListView control to add the items to.
+
+	.PARAMETER Items
+		The object or objects you wish to load into the ListView's Items collection.
+		
+	.PARAMETER  ImageIndex
+		The index of a predefined image in the ListView's ImageList.
+	
+	.PARAMETER  SubItems
+		List of strings to add as Subitems.
+	
+	.PARAMETER Group
+		The group to place the item(s) in.
+	
+	.PARAMETER Clear
+		This switch clears the ListView's Items before adding the new item(s).
+	
+	.EXAMPLE
+		Add-ListViewItem -ListView $listview1 -Items "Test" -Group $listview1.Groups[0] -ImageIndex 0 -SubItems "Installed"
+#>
+	
+	Param( 
+	[ValidateNotNull()]
+	[Parameter(Mandatory=$true)]
+	[System.Windows.Forms.ListView]$ListView,
+	[ValidateNotNull()]
+	[Parameter(Mandatory=$true)]
+	$Items,
+	[int]$ImageIndex = -1,
+	[string[]]$SubItems,
+	$Group,
+	[switch]$Clear)
+	
+	if($Clear)
+	{
+		$ListView.Items.Clear();
+    }
+    
+    $lvGroup = $null
+    if ($Group -is [System.Windows.Forms.ListViewGroup])
+    {
+        $lvGroup = $Group
+    }
+    elseif ($Group -is [string])
+    {
+        #$lvGroup = $ListView.Group[$Group] # Case sensitive
+        foreach ($groupItem in $ListView.Groups)
+        {
+            if ($groupItem.Name -eq $Group)
+            {
+                $lvGroup = $groupItem
+                break
+            }
+        }
+        
+        if ($null -eq $lvGroup)
+        {
+            $lvGroup = $ListView.Groups.Add($Group, $Group)
+        }
+    }
+    
+	if($Items -is [Array])
+	{
+		$ListView.BeginUpdate()
+		foreach ($item in $Items)
+		{		
+			$listitem  = $ListView.Items.Add($item.ToString(), $ImageIndex)
+			#Store the object in the Tag
+			$listitem.Tag = $item
+			
+			if($null -ne $SubItems)
+			{
+				$listitem.SubItems.AddRange($SubItems)
+			}
+			
+			if($null -ne $lvGroup)
+			{
+				$listitem.Group = $lvGroup
+			}
+		}
+		$ListView.EndUpdate()
+	}
+	else
+	{
+		#Add a new item to the ListView
+		$listitem  = $ListView.Items.Add($Items.ToString(), $ImageIndex)
+		#Store the object in the Tag
+		$listitem.Tag = $Items
+		
+		if($null -ne $SubItems)
+		{
+			$listitem.SubItems.AddRange($SubItems)
+		}
+		
+		if($null -ne $lvGroup)
+		{
+			$listitem.Group = $lvGroup
+		}
+	}
+}
+
+
+function Update-ListBox
+{
+<#
+	.SYNOPSIS
+		This functions helps you load items into a ListBox or CheckedListBox.
+	
+	.DESCRIPTION
+		Use this function to dynamically load items into the ListBox control.
+	
+	.PARAMETER ListBox
+		The ListBox control you want to add items to.
+	
+	.PARAMETER Items
+		The object or objects you wish to load into the ListBox's Items collection.
+	
+	.PARAMETER DisplayMember
+		Indicates the property to display for the items in this control.
+	
+	.PARAMETER Append
+		Adds the item(s) to the ListBox without clearing the Items collection.
+	
+	.EXAMPLE
+		Update-ListBox $ListBox1 "Red", "White", "Blue"
+	
+	.EXAMPLE
+		Update-ListBox $listBox1 "Red" -Append
+		Update-ListBox $listBox1 "White" -Append
+		Update-ListBox $listBox1 "Blue" -Append
+	
+	.EXAMPLE
+		Update-ListBox $listBox1 (Get-Process) "ProcessName"
+	
+	.NOTES
+		Additional information about the function.
+#>
+	
+	param
+	(
+		[Parameter(Mandatory = $true)]
+		[ValidateNotNull()]
+		[System.Windows.Forms.ListBox]
+		$ListBox,
+		[Parameter(Mandatory = $true)]
+		[ValidateNotNull()]
+		$Items,
+		[Parameter(Mandatory = $false)]
+		[string]
+		$DisplayMember,
+		[switch]
+		$Append
+	)
+	
+	if (-not $Append)
+	{
+		$listBox.Items.Clear()
+	}
+	
+	if ($Items -is [System.Windows.Forms.ListBox+ObjectCollection])
+	{
+		$listBox.Items.AddRange($Items)
+	}
+	elseif ($Items -is [Array])
+	{
+		$listBox.BeginUpdate()
+		foreach ($obj in $Items)
+		{
+			$listBox.Items.Add($obj)
+		}
+		$listBox.EndUpdate()
+	}
+	else
+	{
+		$listBox.Items.Add($Items)
+	}
+	
+	$listBox.DisplayMember = $DisplayMember
+}
+
+
+
+
+
+#$notifywinupdates_MouseDoubleClick=[System.Windows.Forms.MouseEventHandler]{
+##Event Argument: $_ = [System.Windows.Forms.MouseEventArgs]
+#	#TODO: Place custom script here
+#	$NotifyIcon.BalloonTipText = "This is the balloon text"
+#	
+#}
+
+
+## This button is for printing output results from output results box.
+$linklabelSetMicrosoftPrintToP_LinkClicked=[System.Windows.Forms.LinkLabelLinkClickedEventHandler]{
+#Event Argument: $_ = [System.Windows.Forms.LinkLabelLinkClickedEventArgs]
+	#TODO: Place custom script here
+	
+}
+
+######################################################################################################
+## Module Installation - Microsoft Windows Updates
+## Fetches module for MicrosoftWindows Updates.
+## This uses the standard public defato way of getting updates.
+## This module needs to be disabled or removed for Shiro Scout Domain-Joined app.
+######################################################################################################
+
+##Install-Module PSWindowsUpdate -Force
+
+
+######################################################################################################
+## COLLECT PC INFORMATION
+######################################################################################################
+
+$buttonCollectPCInformation_Click = {
+	Add-logs -text "Collecting PC Info"
+	$statusbar.Text = "Please hold for a moment while I get that info..."
+	#$Command = Microsoft.PowerShell.Core\Start-Job -ScriptBlock { Systeminfo -fo "LIST" |  Microsoft.PowerShell.Utility\Out-String } 
+	$Script = (Systeminfo -fo "LIST" | Microsoft.PowerShell.Utility\Format-List | Microsoft.PowerShell.Utility\Out-String)
+	#Microsoft.PowerShell.Utility\Invoke-Expression -Command $Command
+	$richtextbox1.Text = ($Script)
+	$statusbar.Text = "Phew! That was a lot of work. Here you go."
+	
+}
+WriteLog "Gathering PC Info..."
+
+
+
+########################################################################################################
+## FADE IN APP FORM LOAD
+########################################################################################################
+
+$fadeIn_Load={
+	#Start the Timer to Fade In
+	$timerFadeIn.Start()
+	$MainForm.Opacity = 0
+}
+#Append the event to the form
+$MainForm.add_Load($fadeIn_Load)
+
+
+$timerFadeIn_Tick={
+	#Can you see me now?
+	if($MainForm.Opacity -lt 1)
+	{
+		$MainForm.Opacity += 0.1
+		
+		if($MainForm.Opacity -ge 1)
+		{
+			#Stop the timer once we are 100% visible
+			$timerFadeIn.Stop()
+		}
+	}
+}
+
+## END FADE IN APP FORM LOAD
+
+###################################################################################
+## This is the app exit close button - do not remove
+###################################################################################
+
+$buttonEXIT_Click={
+	#TODO: Place custom script here
+	
+}
+
+
+
+###################################################################################
+## This is the app STATUS BAR PANEL - do not remove
+###################################################################################
+$statusbar_PanelClick=[System.Windows.Forms.StatusBarPanelClickEventHandler]{
+#Event Argument: $_ = [System.Windows.Forms.StatusBarPanelClickEventArgs]
+	#TODO: Place custom script here
+	
+}
+
+
+
+$listviewApplications_ColumnClick=[System.Windows.Forms.ColumnClickEventHandler]{
+#Event Argument: $_ = [System.Windows.Forms.ColumnClickEventArgs]
+	Update-ListViewColumnSort $this $_.Column
+}
+
+$listviewApplications_SelectedIndexChanged={
+	#TODO: Place custom script here
+	
+}
+
+
+$processTracker_FormClosed=[System.Windows.Forms.FormClosedEventHandler]{
+#Event Argument: $_ = [System.Windows.Forms.FormClosedEventArgs]
+	#Stop any pending processes
+	#Stop-ProcessTracker
+}
+
+$timerProcessTracker_Tick={
+	Update-ProcessTracker
+}
+
+#region Process Tracker
+function Stop-ProcessTracker
+{
+	<#
+		.SYNOPSIS
+			Stops and removes all processes from the list.
+	#>
+	#Stop the timer
+	$timerProcessTracker.Stop()
+	
+	#Remove all the processes
+	while($ProcessTrackerList.Count -gt 0)
+	{
+		$process = $ProcessTrackerList[0].Process
+		$ProcessTrackerList.RemoveAt(0)
+		if(-not $process.HasExited)
+		{
+			Microsoft.PowerShell.Management\Stop-Process -InputObject $process
+		}
+	}
+}
+
+$ProcessTrackerList = Microsoft.PowerShell.Utility\New-Object System.Collections.ArrayList
+function Add-ProcessTracker
+{
+	<#
+		.SYNOPSIS
+			Add a new process to the ProcessTracker and starts the timer.
+	
+		.DESCRIPTION
+			Add a new process to the ProcessTracker and starts the timer.
+	
+		.PARAMETER  FilePath
+			The path to executable.
+	
+		.PARAMETER ArgumentList
+			The arguments to pass to the process.
+	
+		.PARAMETER CompletedScript
+			The script block that will be called when the process is complete.
+			The process is passed as an argument. The process argument is null when the job fails.
+	
+		.PARAMETER UpdateScript
+			The script block that will be called each time the timer ticks.
+			The process is passed as an argument.
+	
+		.PARAMETER RedirectOutputScript
+			The script block that handles output from the process.
+			Use $_.Data to access the output text.
+	
+		.PARAMETER RedirectErrorScript
+			The script block that handles error output from the process.
+			Use $_.Data to access the output text.
+	
+		.PARAMETER NoNewWindow
+			Start the new process in the current console window.
+	
+		.PARAMETER WindowStyle
+			Specifies the state of the window that is used for the new process. 
+			Valid values are Normal, Hidden, Minimized, and Maximized. 
+			The default value is Normal.
+	
+		.PARAMETER WorkingDirectory
+			Specifies the location of the executable file or document that runs in the process. 
+			The default is the current directory.
+	
+		.PARAMETER RedirectInput
+			Redirects the input of the process. If this switch is set, the function will return the process object.
+			Use the process object's StandardInput property to access the input stream.
+	
+		.PARAMETER PassThru
+			Returns the process that was started.
+	
+		.PARAMETER SyncObject
+			The object used to marshal the process event handler calls that are issued.
+			You must pass a control to sync otherwise it will produce an error when redirecting output.
+
+		.EXAMPLE
+			 Add-ProcessTracker -FilePath 'notepad.exe' `
+			-SyncObject $form1 `
+			-CompletedScript {
+				Param([System.Diagnostics.Process]$Process)
+				$button.Enable = $true
+			}`
+			-UpdateScript {
+				Param([System.Diagnostics.Process]$Process)
+				Function-Animate $button
+			}`
+			-RedirectOutputScript {
+			# Use $_.Data to access the output text
+				$textBox1.AppendText($_.Data)
+				$textBox1.AppendText("`r`n")
+			}
+		.EXAMPLE
+			$process = Add-ProcessTracker -FilePath 'powershell.exe' `
+			-RedirectInput `
+			-SyncObject $buttonRunProcess `
+			-RedirectOutputScript {
+				# Use $_.Data to access the output text
+				$richtextbox1.AppendText($_.Data)
+				$richtextbox1.AppendText("`r`n")
+			}
+			
+			#Write to the console
+			$process.StandardInput.WriteLine("Get-Process")
+	
+		.OUTPUTS
+			 System.Diagnostics.Process
+	#>
+	
+	[OutputType([System.Diagnostics.Process])]
+	Param (
+		[ValidateNotNull()]
+		[Parameter(Mandatory = $true)]
+		[string]$FilePath,
+		[string]$Arguments,
+		[string]$WorkingDirectory,
+		[Parameter(Mandatory = $true)]
+		[ValidateNotNull()]
+		[System.ComponentModel.ISynchronizeInvoke]$SyncObject,
+		[ScriptBlock]$CompletedScript,
+		[ScriptBlock]$UpdateScript,
+		[ScriptBlock]$RedirectOutputScript,
+		[ScriptBlock]$RedirectErrorScript,
+		[System.Diagnostics.ProcessWindowStyle]$WindowStyle = 'Normal',
+		[switch]$RedirectInput,
+		[switch]$NoNewWindow,
+		[switch]$PassThru
+	)
+	
+	#Start the Process
+	try
+	{
+		$process = Microsoft.PowerShell.Utility\New-Object System.Diagnostics.Process
+		$process.StartInfo.FileName = $FilePath
+		$process.StartInfo.WindowStyle = $WindowStyle
+		
+		if ($NoNewWindow)
+		{
+			$process.StartInfo.CreateNoWindow = $true
+		}
+		
+		if ($WorkingDirectory)
+		{
+		 	$process.StartInfo.WorkingDirectory = $WorkingDirectory
+		}
+		
+		#Handle Redirection
+		if ($RedirectErrorScript)
+		{
+			$process.EnableRaisingEvents = $true
+			$process.StartInfo.UseShellExecute = $false
+			$process.StartInfo.RedirectStandardError = $true
+			$process.StartInfo.CreateNoWindow = $true
+			$process.add_ErrorDataReceived($RedirectErrorScript)
+		}
+		
+		if ($RedirectOutputScript)
+		{
+			$process.StartInfo.UseShellExecute = $false
+			$process.StartInfo.RedirectStandardOutput = $true
+			$process.add_OutputDataReceived($RedirectOutputScript)
+		}
+		
+		if($RedirectInput)
+		{
+			$process.EnableRaisingEvents = $true
+			$process.StartInfo.UseShellExecute = $false
+			$process.StartInfo.CreateNoWindow = $true
+			$process.StartInfo.RedirectStandardInput = $true
+			$PassThru = $true #Force the object to return
+		}
+		
+		#Pass the arguments and sync with the form
+		$process.StartInfo.Arguments = $Arguments
+		$process.SynchronizingObject = $SyncObject
+		$process.Start() | Microsoft.PowerShell.Core\Out-Null
+		
+		#Begin the redirect reads
+		if ($RedirectOutputScript)
+		{
+			$process.BeginOutputReadLine()
+		}
+		
+		if ($RedirectErrorScript)
+		{
+			$process.BeginErrorReadLine()
+		}
+	}
+	catch
+	{
+		Microsoft.PowerShell.Utility\Write-Error $_.Exception.Message
+		$process = $null
+	}
+	
+	if ($null -ne $process)
+	{
+		#Create a Custom Object to keep track of the Job & Script Blocks
+		$members = @{
+			"Process"	     = $process;
+			"CompleteScript" = $CompletedScript;
+			"UpdateScript"   = $UpdateScript
+		}
+		
+		$psObject = Microsoft.PowerShell.Utility\New-Object System.Management.Automation.PSObject -Property $members
+		
+		[void]$ProcessTrackerList.Add($psObject)
+		
+		#Start the Timer
+		if (-not $timerProcessTracker.Enabled)
+		{
+			$timerProcessTracker.Start()
+		}
+			
+		#Return the process if using PassThru
+		if ($PassThru)
+		{
+			return $process
+		}
+	}
+	elseif ($null -ne $CompletedScript)
+	{
+		#Failed
+		Microsoft.PowerShell.Core\Invoke-Command -ScriptBlock $CompletedScript -ArgumentList $null
+	}
+	
+}
+
+function Update-ProcessTracker
+{
+	<#
+		.SYNOPSIS
+			Checks the status of each job on the list.
+	#>
+	
+	#Poll the jobs for status updates
+	$timerProcessTracker.Stop() #Freeze the Timer
+	
+	for($index =0; $index -lt $ProcessTrackerList.Count; $index++)
+	{
+		$psObject = $ProcessTrackerList[$index]
+		
+		if($null -ne $psObject) 
+		{
+			if($null -ne $psObject.Process)
+			{
+				if($psObject.Process.HasExited)
+				{
+					#Call the Complete Script Block
+					if($null -ne $psObject.CompleteScript)
+					{
+						#$results = Receive-Job -Job $psObject.Job
+						Microsoft.PowerShell.Core\Invoke-Command -ScriptBlock $psObject.CompleteScript -ArgumentList $psObject.Process
+					}
+					
+					$ProcessTrackerList.RemoveAt($index)
+					$index-- #Step back so we don't skip a job
+					$psObject.Process.Dispose()#clean up
+				}
+				elseif($null -ne $psObject.UpdateScript)
+				{
+					#Call the Update Script Block
+					Microsoft.PowerShell.Core\Invoke-Command -ScriptBlock $psObject.UpdateScript -ArgumentList $psObject.Process
+				}
+			}
+		}
+		else
+		{
+			$ProcessTrackerList.RemoveAt($index)
+			$index-- #Step back so we don't skip a job
+		}
+	}
+	
+	if($ProcessTrackerList.Count -gt 0)
+	{
+		$timerProcessTracker.Start()#Resume the timer
+	}
+}
+#endregion
+
+$jobTracker_FormClosed=[System.Windows.Forms.FormClosedEventHandler]{
+#Event Argument: $_ = [System.Windows.Forms.FormClosedEventArgs]
+	#Stop any pending jobs
+	Stop-JobTracker
+}
+
+$timerJobTracker_Tick={
+	Update-JobTracker
+}
+
+#region Job Tracker
+$JobTrackerList = Microsoft.PowerShell.Utility\New-Object System.Collections.ArrayList
+function Add-JobTracker
+{
+	<#
+		.SYNOPSIS
+			Add a new job to the JobTracker and starts the timer.
+	
+		.DESCRIPTION
+			Add a new job to the JobTracker and starts the timer.
+	
+		.PARAMETER  Name
+			The name to assign to the job.
+	
+		.PARAMETER  JobScript
+			The script block that the job will be performing.
+			Important: Do not access form controls from this script block.
+	
+		.PARAMETER ArgumentList
+			The arguments to pass to the job.
+	
+		.PARAMETER  CompletedScript
+			The script block that will be called when the job is complete.
+			The job is passed as an argument. The Job argument is null when the job fails.
+	
+		.PARAMETER  UpdateScript
+			The script block that will be called each time the timer ticks.
+			The job is passed as an argument. Use this to get the Job's progress.
+	
+		.EXAMPLE
+			Add-JobTracker -Name 'JobName' `
+			-JobScript {	
+				Param($Argument1)#Pass any arguments using the ArgumentList parameter
+				#Important: Do not access form controls from this script block.
+				Get-WmiObject Win32_Process -Namespace "root\CIMV2"
+			}`
+			-CompletedScript {
+				Param($Job)		
+				$results = Receive-Job -Job $Job
+			}`
+			-UpdateScript {
+				Param($Job)
+				#$results = Receive-Job -Job $Job -Keep
+			}
+	
+		.LINK
+			
+	#>
+	
+	Param(
+	[ValidateNotNull()]
+	[Parameter(Mandatory=$true)]
+	[string]$Name,
+	[ValidateNotNull()]
+	[Parameter(Mandatory=$true)]
+	[ScriptBlock]$JobScript,
+	$ArgumentList = $null,
+	[ScriptBlock]$CompletedScript,
+	[ScriptBlock]$UpdateScript)
+	
+	#Start the Job
+	$job = Microsoft.PowerShell.Core\Start-Job -Name $Name -ScriptBlock $JobScript -ArgumentList $ArgumentList
+	
+	if($null -ne $job)
+	{
+		#Create a Custom Object to keep track of the Job & Script Blocks
+		$members = @{	'Job' = $Job;
+						'CompleteScript' = $CompletedScript;
+						'UpdateScript' = $UpdateScript}
+		
+		$psObject = Microsoft.PowerShell.Utility\New-Object System.Management.Automation.PSObject -Property $members
+		
+		[void]$JobTrackerList.Add($psObject)
+		
+		#Start the Timer
+		if(-not $timerJobTracker.Enabled)
+		{
+			$timerJobTracker.Start()
+		}
+	}
+	elseif($null -ne $CompletedScript)
+	{
+		#Failed
+		Microsoft.PowerShell.Core\Invoke-Command -ScriptBlock $CompletedScript -ArgumentList $null
+	}
+
+}
+
+function Update-JobTracker
+{
+	<#
+		.SYNOPSIS
+			Checks the status of each job on the list.
+	#>
+	
+	#Poll the jobs for status updates
+	$timerJobTracker.Stop() #Freeze the Timer
+	
+	for($index = 0; $index -lt $JobTrackerList.Count; $index++)
+	{
+		$psObject = $JobTrackerList[$index]
+		
+		if($null -ne $psObject)
+		{
+			if($null -ne $psObject.Job)
+			{
+				if ($psObject.Job.State -eq 'Blocked')
+                {
+                    #Try to unblock the job
+                    Microsoft.PowerShell.Core\Receive-Job $psObject.Job | Microsoft.PowerShell.Core\Out-Null
+                }
+                elseif($psObject.Job.State -ne 'Running')
+				{				
+					#Call the Complete Script Block
+					if($null -ne $psObject.CompleteScript)
+					{
+						#$results = Receive-Job -Job $psObject.Job
+						Microsoft.PowerShell.Core\Invoke-Command -ScriptBlock $psObject.CompleteScript -ArgumentList $psObject.Job
+					}
+					
+					$JobTrackerList.RemoveAt($index)
+					Microsoft.PowerShell.Core\Remove-Job -Job $psObject.Job
+					$index-- #Step back so we don't skip a job
+				}
+				elseif($null -ne $psObject.UpdateScript)
+				{
+					#Call the Update Script Block
+					Microsoft.PowerShell.Core\Invoke-Command -ScriptBlock $psObject.UpdateScript -ArgumentList $psObject.Job
+				}
+			}
+		}
+		else
+		{
+			$JobTrackerList.RemoveAt($index)
+			$index-- #Step back so we don't skip a job
+		}
+	}
+	
+	if($JobTrackerList.Count -gt 0)
+	{
+		$timerJobTracker.Start()#Resume the timer
+	}	
+}
+
+function Stop-JobTracker
+{
+	<#
+		.SYNOPSIS
+			Stops and removes all Jobs from the list.
+	#>
+	#Stop the timer
+	$timerJobTracker.Stop()
+	
+	#Remove all the jobs
+	while($JobTrackerList.Count -gt 0)
+	{
+		$job = $JobTrackerList[0].Job
+		$JobTrackerList.RemoveAt(0)
+		Microsoft.PowerShell.Core\Stop-Job $job
+		Microsoft.PowerShell.Core\Remove-Job $job
+	}
+}
+#endregion
+
+
+
+
+
+###################################################################################
+## NETWORKING AND SOFTWARE
+###################################################################################
+
+$button_ipaddress_Click={
+    #TODO: Place custom script here
+	# This command needs modified and corrected. Sometimes it works correctly and sometimes picks different NIC card settings.
+	# It is difficult to always find users active IP Address correctly, especially if user has multiple NICS, Hyper-V or other nic card components installed in computer.
+	$RichTextBox1.Text =
+	# (ipconfig | findstr [0-9].\.)[0]
+	## Trying this command to see if results from command are more consistant. One or both can be removed if needed if neither are working correctly.
+	$RichTextBox1.AppendText() =
+	NetTCPIP\Get-NetIPAddress | Microsoft.PowerShell.Utility\Format-Table | Microsoft.PowerShell.Utility\Out-String
+	$statusbar.Text = "I think that's right but it gets confusing if you have more than 1 active network card.You might need to verify that info."
+    
+	
+}
+
+#$buttonTestNetworkConnectio_Click={
+#	#TODO: Place custom script here
+#    # $statusbar.Text.Trim() = "Please Wait... TRUE=Success FALSE=Failure"
+#   
+#	$statusbar.Visible = $true
+#    $statusbar.Text = "The response TRUE means everything appears good and internet should be working."
+#    $richtextbox1.Text =
+#	## >>> Code needs corrected>>> Test-Connection -ComputerName $env:COMPUTERNAME| Out-String
+
+
+$buttonOpenNetworkConnectio_Click= {
+	#TODO: Place custom script here
+	$richtextbox1.Text =
+	NetTCPIP\Get-NetTCPConnection -State Established | Microsoft.PowerShell.Utility\Select-Object -Property LocalAddress, LocalPort, OwningProcess | Microsoft.PowerShell.Utility\Out-String -Width 400
+	$statusbar.Text = "Any results are usually not a concern but you can do a Windows firewall reset to verify basic security."
+}
+
+
+$buttonBrowserFlushDNSCache_Click={
+	# Command here is similiar to ipconfig /flushdns
+    $richtextbox1.Text=
+	DnsClient\Clear-DnsClientCache -AsJob | Microsoft.PowerShell.Utility\Format-List | Microsoft.PowerShell.Utility\Out-String
+	
+	$statusbar.Text = "DNS Cache has been Flushed"
+	$statusbar.Visible = $true
+}
+
+$buttonBrowserWebStackTest_Click = {
+	# This command is for by-passing locally installed browser, using the PC IP/Networking stack and running a mini browser to test if issue is solely with a browser vs ip stack or networking issues.
+	$richtextbox1.Text =
+	Microsoft.PowerShell.Management\Start-Process -FilePath ".\Browser\QtWeb.exe" -PassThru
+	$statusbar.Text = "When the browser launches on the righthand menu choose Google Chrome. If your browser does not loadpage, but this does, you probably have a browser issue.Close the browser."
+}
+
+$buttonMyInstalledPrinters_Click={
+    # This command lists all current capable devices that can print, including software components.
+    $richtextbox1.Lines =
+	PrintManagement\Get-Printer | Microsoft.PowerShell.Utility\Format-Table -Property 'Name' | Microsoft.PowerShell.Utility\Out-String
+	$statusbar.Text = "Finds all currently known installed print capable devices on computer."
+	
+}
+
+$buttonMyMappedDrives_Click={
+	# This command finds all current mapped drives.
+	$richtextbox1.Text =
+	net use | Microsoft.PowerShell.Utility\Format-List -Property 'Label', 'Folder' | Microsoft.PowerShell.Utility\Out-String
+	# Get-PSDrive -PSProvider FileSystem | Out-String
+}
+
+$buttonHelpRemoveAPrinter_Click = {
+	$statusbar.Text = "Get theprinter name from viewing installed printers. Copy and paste name of printer in text box field that you would like removed."
+	$statusbar.Visible = $true
+	#This commnd requires the exact name listed from command of list printers. it appears to be a bit buggy, and will not always delete or remove the specified printer.
+	$richtextbox1.Text =
+	PrintManagement\Get-Printer | Microsoft.PowerShell.Utility\Format-Wide -Column '3' -Property 'Name' | Microsoft.PowerShell.Utility\Out-String
+	PrintManagement\Remove-Printer
+}
+
+
+$buttonInstalledNetPrinters_Click={
+	#InstalledNetwork Printer lists any network printer installed.
+    $richtextbox1.Text= "If empty no network printers were found."
+    PrintManagement\Get-Printer | Microsoft.PowerShell.Core\Where-Object{ $_.Network -eq 'true' }
+    
+	$statusbar.Text = "No Network Printers found if Output Text Box is Empty. Empty=Nothing Found"
+	$statusbar.Visible = $true
+}
+
+
+
+
+#############################################################################
+## RICH TEXT BOX BOTTOM FORM BUTTONS
+#############################################################################
+
+$buttonExportPDFResults_Click={
+    #TODO: Place custom script here
+    $richtextbox1.Text.Trim() | Microsoft.PowerShell.Utility\Out-Printer -Name "Microsoft Print to PDF"
+    
+    $statusbar.Text = "Please save document in a safe location."
+    $statusbar.Visible = $true
+    Microsoft.PowerShell.Utility\Start-Sleep -Seconds 2
+    $statusbar.Visible = $false
+
+}#end buttonExportPDFResults_Click
+
+# This is the app Print XPS Doc button - do not remove
+$buttonExportXPSResults_Click = {
+	$richtextbox1.Text.Trim() | Microsoft.PowerShell.Utility\Out-Printer -Name "Microsoft XPS Document Writer"
+	
+	$statusbar.Text = "Please save document in a safe location."
+	$statusbar.Visible = $true
+	Microsoft.PowerShell.Utility\Start-Sleep -Seconds 2
+	$statusbar.Visible = $false
+}
+
+$buttonCopyToClipboard_Click={
+    #TODO: Place custom script here
+    $richtextbox1.SelectAll()
+    $richtextbox1.Copy()
+	$statusbar.Text = "Contents has been copied to clipboard."
+}#end buttonCopyToClipboard_Click
+
+$buttonNotepadEditor_Click={
+	#TODO: Place custom script here
+	Microsoft.PowerShell.Management\Start-Process notepad
+	$statusbar.Text = "This command launched Notepad Editor."
+}#end buttonNotepadEditor_Click
+
+$buttonClearOutputTextbox_Click= {
+    #TODO: Place custom script here
+    
+        $richTextBox1.SelectAll();
+        $richTextBox1.Clear();
+	$statusbar.Text = "All content has been removed."
+}
+#end buttonClearOutputTextbox_Click
+
+## CHART PROCESSES
+$chartProcesses_VisibleChanged={
+	if($this.Visible)
+	{
+		Update-ProcessChart -Chart $this -Top 5	
+	}
+}
+
+$chartProcesses_Click={
+	#TODO: Place custom script here
+	
+}#end chartProcesses_Click
+
+function Update-ProcessChart
+{
+	Param ( [Parameter(Position=1,Mandatory=$true)]
+			[System.Windows.Forms.DataVisualization.Charting.Chart]$Chart,
+			[int]$Top = 5)
+	
+	$Processes = Microsoft.PowerShell.Management\Get-Process | Microsoft.PowerShell.Utility\Sort-Object -Property WS | Microsoft.PowerShell.Utility\Select-Object Name,WS,ID -Last $Top 
+	$ProcNames = @(foreach($Proc in $Processes){$Proc.Name + " (" + $Proc.ID + ")"}) 
+	$WS = @(foreach($Proc in $Processes){$Proc.WS/1MB}) 
+
+	Update-Chart $Chart -XPoints $ProcNames -YPoints $WS -Title "Top $Top Processes"
+}
+
+$chartMemoryUsage_VisibleChanged={
+	
+	if($chartMemoryUsage.Visible)
+	{
+		Update-MemoryUsageChart -Chart $chartMemoryUsage -Top 5
+	}
+}
+
+$chartMemoryUsage_Click={
+	#TODO: Place custom script here
+	
+}#end chartMemoryUsage_Click
+
+function Update-MemoryUsageChart
+{
+	Param ( 	
+	[ValidateNotNull()]
+	[Parameter(Position=1,Mandatory=$true)]
+	[System.Windows.Forms.DataVisualization.Charting.Chart]$Chart,
+	[int]$Top = 5)
+	
+	$processes = Microsoft.PowerShell.Management\Get-Process | Microsoft.PowerShell.Utility\Sort-Object PrivateMemorySize -Descending  | Microsoft.PowerShell.Utility\Select-Object -First $Top
+	$ProcNames = @(foreach($Proc in $processes){$Proc.Name}) 
+	$VirtualMem = @(foreach($Proc in $processes){$Proc.VirtualMemorySize/1MB}) 
+	$PrivateMem = @(foreach($Proc in $processes){$Proc.PrivateMemorySize/1MB}) 
+	
+  #Clear-Chart -ChartControl $Chart
+	Update-Chart -ChartControl $Chart -ChartType 'Column' -Title "Top $Top - Memory Usage" `
+			-XTitle 'Process Name' -YTitle 'Memory (MB)' -XPoints $ProcNames -YPoints $VirtualMem -SeriesName 'Virtual'
+	Update-Chart -ChartControl $Chart -XPoints $ProcNames -YPoints $PrivateMem -SeriesName 'Private'
+	
+}
+
+$chartDiskSpace_VisibleChanged={
+	if($this.Visible)
+	{
+		Update-DiskChart $this
+	}
+}
+
+$chartDiskSpace_Click={
+	#TODO: Place custom script here
+	
+}#end chartDiskSpace_Click
+
+#Call Update-DiskChart function to load the chart
+function Update-DiskChart
+{
+	Param ( [Parameter(Position=1,Mandatory=$true)]
+			[System.Windows.Forms.DataVisualization.Charting.Chart]$Chart)
+	#Get Disk space using WMI and make sure it is an array
+	$Disks = @(Microsoft.PowerShell.Management\Get-WmiObject Win32_LogicalDisk -filter "DriveType=3" )
+		
+	#Remove all the current charts
+	Clear-Chart $Chart 
+	
+	#Loop through each drive
+	foreach($disk in $Disks)
+	{	
+		$UsedSpace =(($disk.size - $disk.freespace)/1gb)
+		$FreeSpace = ($disk.freespace/1gb)
+
+		#Load a Chart for each Drive
+		Update-Chart $Chart -XPoints ("Used ({0:N1} GB)" -f $UsedSpace), ("Free Space ({0:N1} GB)" -f $FreeSpace) -YPoints $UsedSpace, $FreeSpace -ChartType "Column" -Title ("Volume: {0} ({1:N1} GB)" -f $disk.VolumeName, ($disk.size/1gb) ) -AppendNew	
+	}
+	
+	#Set Custom Style
+	foreach ($Series in $chartDiskSpace.Series)
+	{
+		$Series.CustomProperties = "PieDrawingStyle=Concave"
+	}
+}
+## END OF CHART PROCESSES
+
+##################################################################################
+## WIN TOOLS QWIK ACCESS BUTTONS
+##################################################################################
+
+
+$quickpc_Click={
+	#TODO: Place custom script here
+	explorer
+}#end quickpc_Click
+
+$panel2_Paint=[System.Windows.Forms.PaintEventHandler]{
+#Event Argument: $_ = [System.Windows.Forms.PaintEventArgs]
+	#TODO: Place custom script here
+	
+}#end panel2_Paint
+
+$quickcontrol_Click={
+	#TODO: Place custom script here
+	Control.exe
+}#end quickcontrol_Click
+
+$quickpaint_Click = {
+	#TODO: Place custom script here
+	mspaint
+}#end quickpaint_Click
+
+$quicknotepad_Click = {
+	#TODO: Place custom script here
+	notepad
+}#end quicknotepad_Click
+
+$quicksnip_Click={
+	#TODO: Place custom script here
+	SnippingTool
+}#end quicksnip_Click
+
+$quickrecord_Click={
+	#TODO: Place custom script here
+	psr
+	$statusbar.Text = "The Steps Recorder app has been removed from newer versions of Windows 10. This is depricated and will be removed from future versions of Shiro Scout."
+}#end quickrecord_Click
+
+
+#####################################################################################
+## WIN TOOLS - SETTINGS OPTIONS
+#####################################################################################
+
+$picturebox21_Click={
+	#TODO: Place custom script here
+	msdt
+}#end picturebox21_Click
+
+
+
+$pbaccessibility_Click={
+	#TODO: Place custom script here
+    control -Name "Microsoft.EaseOfAccessCenter"
+}#end pbaccessibility_Click
+
+$pbadmintools_Click={
+	#TODO: Place custom script here
+	control -Name "Microsoft.AdministrativeTools"
+}#end pbadmintools_Click
+
+$pbcolormgt_Click={
+	#TODO: Place custom script here
+	control -Name "Microsoft.ColorManagement"
+}#end pbcolormgt_Click
+
+$pbfindfix_Click={
+	#TODO: Place custom script here
+	control -Name "Microsoft.Troubleshooting"
+	
+	
+}#end pbfindfix_Click
+
+$pbfirewall_Click={
+	#TODO: Place custom script here
+	control -Name "Microsoft.WindowsFirewall"
+	
+}#end pbfirewall_Click
+
+$pbfonts_Click={
+	#TODO: Place custom script here
+	control -Name "Microsoft.Fonts"
+}#end pbfonts_Click
+
+$pbhddrestore_Click={
+	#TODO: Place custom script here
+	control -Name "Microsoft.Recovery"
+}#end pbhddrestore_Click
+
+$quicksysinfo_Click={
+	#TODO: Place custom script here
+	msinfo32
+}#end quicksysinfo_Click
+
+
+
+$pbwindowsupdates_Click = {
+	#TODO: Place custom script here
+	control -Name "Microsoft.WindowsUpdate"
+}
+
+
+$pbiesettings_Click = {
+	#TODO: Place custom script here
+	control -Name "Microsoft.InternetOptions"
+}
+
+$pbkeyboard_Click = {
+	#TODO: Place custom script here
+	control -Name "Microsoft.Keyboard"
+}
+
+$pbmouse_Click = {
+	#TODO: Place custom script here
+	control -Name "Microsoft.Mouse"
+}
+
+$pbmediausb_Click = {
+	#TODO: Place custom script here
+	control -Name "Microsoft.AutoPlay"
+}
+
+$pbnetworked_Click = {
+	#TODO: Place custom script here
+	control -Name "Microsoft.NetworkAndSharingCenter"
+}
+
+$pbpower_Click = {
+	#TODO: Place custom script here
+	control -Name "Microsoft.PowerOptions"
+}
+
+$pbprintermfd_Click = {
+	#TODO: Place custom script here
+	control -Name "Microsoft.DevicesAndPrinters"
+}
+
+$pbremotesettings_Click = {
+	#TODO: Place custom script here
+	control -Name "Microsoft.RemoteAppAndDesktopConnections"
+}
+
+$pbsecuritysettings_Click = {
+	#TODO: Place custom script here
+	control -Name "Microsoft.CredentialManager"
+}
+
+$pbshowpcinfo_Click = {
+	#TODO: Place custom script here
+	control -Name "Microsoft.System"
+}
+
+$pbsoftware_Click = {
+	#TODO: Place custom script here
+	control -Name "Microsoft.ProgramsAndFeatures"
+}
+
+$pbrecycle_Click = {
+	#TODO: Place custom script here
+	Microsoft.PowerShell.Management\Invoke-Item -Path "c:\`$Recycle.bin"
+}
+
+$pbdefaultapp_Click = {
+	#TODO: Place custom script here
+	control -Name "Microsoft.DefaultPrograms"
+}
+
+$pbtaskbar_Click = {
+	#TODO: Place custom script here
+	control -Name "Microsoft.Taskbar"
+}
+
+$pbtimedate_Click = {
+	#TODO: Place custom script here
+	control -Name "Microsoft.DateAndTime"
+}
+
+$pbusersgroups_Click = {
+	#TODO: Place custom script here
+	control -Name "Microsoft.UserAccounts"
+}
+
+
+$quickcleanup_Click={
+	#TODO: Place custom script here
+	cleanmgr
+}
+
+$quickcmd_Click={
+	#TODO: Place custom script here
+	Microsoft.PowerShell.Management\Start-Process cmd
+}
+
+$quickmsconfig_Click={
+	#TODO: Place custom script here
+	msconfig
+}
+
+$quicksfc_Click={
+	#TODO: Place custom script here
+	
+	Microsoft.PowerShell.Management\Start-Process -FilePath "${env:Windir}\System32\SFC.EXE" -ArgumentList '/scannow' -Verb RunAs
+}
+
+
+###############################################################################################
+## SPLASH SCREEN CODE
+###############################################################################################
+
+$formSplashScreen_Load = {
+	<#
+	Use the -PassTru parameter to update the splash screen text:
+	.EXAMPLE
+	$splashForm = Show-SplashScreen ... -PassThru
+	#Update the splash screen text
+	$splashForm.Text = 'Loading Modules...'
+	#>
+	
+	$paramShowSplashScreen = @{
+		Image = $pictureboxSplashScreenHidden.Image
+		Title = 'Loading...'
+		PassThru = $false
+	}
+	
+	Show-SplashScreen @paramShowSplashScreen
+	
+	#TODO: Place initialization script here:
+	
+}
+#Append the event to the form
+$MainForm.add_Load($formSplashScreen_Load)
+
+#Splash Screen Code - do not remove
+#region Splash Screen Helper Function
+function Show-SplashScreen
+{
+	<#
+	.SYNOPSIS
+		Displays a splash screen using the specified image.
+	
+	.PARAMETER Image
+		Mandatory Image object that is displayed in the splash screen.
+	
+	.PARAMETER Title
+		(Optional) Sets a title for the splash screen window. 
+	
+	.PARAMETER Timeout
+		The amount of seconds before the splash screen is closed.
+		Set to 0 to leave the splash screen open indefinitely.
+		Default: 2
+	
+	.PARAMETER ImageLocation
+		The file path or url to the image.
+
+	.PARAMETER PassThru
+		Returns the splash screen form control. Use to manually close the form.
+	
+	.PARAMETER Modal
+		The splash screen will hold up the pipeline until it closes.
+
+	.EXAMPLE
+		PS C:\> Show-SplashScreen -Image $Image -Title 'Loading...' -Timeout 3
+
+	.EXAMPLE
+		PS C:\> Show-SplashScreen -ImageLocation 'C:\Image\MyImage.png' -Title 'Loading...' -Timeout 3
+
+	.EXAMPLE
+		PS C:\> $splashScreen = Show-SplashScreen -Image $Image -Title 'Loading...' -PassThru
+				#close the splash screen
+				$splashScreen.Close()
+	.OUTPUTS
+		System.Windows.Forms.Form
+	
+	.NOTES
+		Created by SAPIEN Technologies, Inc.
+
+		The size of the splash screen is dependent on the image.
+		The required assemblies to use this function outside of a WinForms script:
+		Add-Type -AssemblyName System.Windows.Forms
+		Add-Type -AssemblyName System.Drawing
+#>
+	[OutputType([System.Windows.Forms.Form])]
+	param
+	(
+		[Parameter(ParameterSetName = 'Image',
+				   Mandatory = $true,
+				   Position = 1)]
+		[ValidateNotNull()]
+		[System.Drawing.Image]$Image,
+		[Parameter(Mandatory = $false)]
+		[string]$Title,
+		[int]$Timeout = 2,
+		[Parameter(ParameterSetName = 'ImageLocation',
+				   Mandatory = $true,
+				   Position = 1)]
+		[ValidateNotNullOrEmpty()]
+		[string]$ImageLocation,
+		[switch]$PassThru,
+		[switch]$Modal
+	)
+	
+	#Create a splash screen form to display the image.
+	$splashForm = Microsoft.PowerShell.Utility\New-Object System.Windows.Forms.Form
+	
+	#Create a picture box for the image
+	$pict = Microsoft.PowerShell.Utility\New-Object System.Windows.Forms.PictureBox
+	
+	if ($Image)
+	{
+		$pict.Image = $Image;
+	}
+	else
+	{
+		$pict.Load($ImageLocation)
+	}
+	
+	$pict.AutoSize = $true
+	$pict.Dock = 'Fill'
+	$splashForm.Controls.Add($pict)
+	
+	#Display a title if defined.
+	if ($Title)
+	{
+		$splashForm.Text = $Title
+		$splashForm.FormBorderStyle = 'FixedDialog'
+	}
+	else
+	{
+		$splashForm.FormBorderStyle = 'None'
+	}
+	
+	#Set a timer
+	if ($Timeout -gt 0)
+	{
+		$timer = Microsoft.PowerShell.Utility\New-Object System.Windows.Forms.Timer
+		$timer.Interval = $Timeout * 5000
+		$timer.Tag = $splashForm
+		$timer.add_Tick({
+				$this.Tag.Close();
+				$this.Stop()
+			})
+		$timer.Start()
+	}
+	
+	#Show the form
+	$splashForm.AutoSize = $true
+	$splashForm.AutoSizeMode = 'GrowAndShrink'
+	$splashForm.ControlBox = $false
+	$splashForm.StartPosition = 'CenterScreen'
+	$splashForm.TopMost = $true
+	
+	if ($Modal) { $splashForm.ShowDialog() }
+	else { $splashForm.Show() }
+	
+	if ($PassThru)
+	{
+		return $splashForm
+	}
+}
+#endregion
+
+
+
+######################################################################################
+## WEB BROWSER EMBEDDED BOX
+######################################################################################
+# Do Not Remove - Think it is for wep page loading completion
+$webbrowser1_DocumentCompleted=[System.Windows.Forms.WebBrowserDocumentCompletedEventHandler]{
+#Event Argument: $_ = [System.Windows.Forms.WebBrowserDocumentCompletedEventArgs]
+	#TODO: Place custom script here
+	
+}
+
+
+
+
+
+$linklabelSystemFileCheck_LinkClicked=[System.Windows.Forms.LinkLabelLinkClickedEventHandler]{
+#Event Argument: $_ = [System.Windows.Forms.LinkLabelLinkClickedEventArgs]
+	#TODO: Place custom script here
+	$richtextbox1.Text =
+	Microsoft.PowerShell.Management\Start-Process SFC.EXE -ArgumentList '/scannow' -Verb RunAs
+	$statusbar.Text = "System File Checker has been executed. Please allow up to 30 minutes to complete."
+	
+}
+
+$buttonGpUpdate_Click={
+	#TODO: Place custom script here
+	$richtextbox1.Text =
+	Microsoft.PowerShell.Management\Invoke-WmiMethod -Class Win32_Process -Name Create -ArgumentList "gpupdate.exe" -AsJob | Microsoft.PowerShell.Utility\Out-String
+}
+
+
+
+
+
+#$buttonPwrLTLidDoNothing_Click={
+#This action is currently disabled. If enabled, this will prevent laptop 
+# from going into power saving mode when the lid is closed.
+#	start-process "cmd.exe" "/c .\Bat\lid.cmd"
+#}
+
+
+#$buttonDisableStartupRepair_Click={
+#	#This action is currently disabled. If enabled this will prevent Windows from running startup repair. 
+#	# This is mainly for corporate imaged machines, and the startup repair can damage the image files of the 
+#	# Operating System and force the PC to have to be completely reimaged.
+#	$richtextbox1.Text =
+#	start-process "cmd.exe" "/c .\Bat\DisableStartupRepair.Bat"
+#}
+
+
+
+
+$buttonCheckExecutionPolicy_Click_Click={
+	#Complete
+	$richtextbox1.Text =
+	Microsoft.PowerShell.Security\Get-ExecutionPolicy -List | Microsoft.PowerShell.Utility\Format-List | Microsoft.PowerShell.Utility\Out-String
+	
+	$statusbar.Text = "Execution Policy must be set as remotesigned, unrestricted or by-pass mode to run PowerShell or Scripts correctly"
+	$statusbar.Visible = $true
+	
+
+	
+}
+
+#
+
+
+
+
+$buttonGetBasicPCInfo_Click={
+		#TODO: Place custom script here
+		$richtextbox1.Text =
+	Get-CimInstance -ClassName Win32_BIOS|  Microsoft.PowerShell.Utility\Format-List | Microsoft.PowerShell.Utility\Out-String
+		$statusbar.Text = "Need more info? Check out our other option buttons."
+	
+}#end buttonGetBasicPCInfo_Click
+
+$button81_Click={
+	#TODO: Place custom script here
+	
+}#end button81_Click
+
+################################################################################
+## LOG FILE TAB PAGE
+################################################################################
+
+$labelShowAllLogTypesInGri_Click={
+	#TODO: Place custom script here
+    wevtutil el | Microsoft.PowerShell.Utility\Out-GridView
+}#end labelShowAllLogTypesInGri_Click
+
+$labelTheLast20EventsLogs_Click={
+    #TODO: Place custom script here
+    $statusbar.Text = "Options are: Application, Security, System and some names from Out-Grid List will work."
+    $statusbar.Visible = $true
+    
+    $richtextbox1.Text =
+    Microsoft.PowerShell.Management\Get-EventLog -Newest 20 | Microsoft.PowerShell.Utility\Select-Object Index, EventID, Source, Message, MachineName, UserName, TimeGenerated, TimeWritten | Microsoft.PowerShell.Utility\Format-List | Microsoft.PowerShell.Utility\Out-String
+    
+
+}#end labelTheLast20EventsLogs_Click
+
+$linklabelCWINDOWSLogs_LinkClicked=[System.Windows.Forms.LinkLabelLinkClickedEventHandler]{
+#Event Argument: $_ = [System.Windows.Forms.LinkLabelLinkClickedEventArgs]
+	#TODO: Place custom script here
+    Microsoft.PowerShell.Management\Invoke-Item C:\WINDOWS\Logs
+}#end linklabelCWINDOWSLogs_LinkClicked
+
+$linklabelCWINDOWSTemp_LinkClicked=[System.Windows.Forms.LinkLabelLinkClickedEventHandler]{
+#Event Argument: $_ = [System.Windows.Forms.LinkLabelLinkClickedEventArgs]
+	#TODO: Place custom script here
+    Microsoft.PowerShell.Management\Invoke-Item  C:\WINDOWS\Temp
+}#end linklabelCWINDOWSTemp_LinkClicked
+
+
+
+
+$linklabelAppDataLocalTemp_LinkClicked=[System.Windows.Forms.LinkLabelLinkClickedEventHandler]{
+#Event Argument: $_ = [System.Windows.Forms.LinkLabelLinkClickedEventArgs]
+	#TODO: Place custom script here
+    Microsoft.PowerShell.Management\Invoke-Item -Path $env:userprofile\AppData\Local\Temp
+}#end linklabelAppDataLocalTemp_LinkClicked
+
+$tabpage9_Click={
+	#TODO: Place custom script here
+	
+}#end tabpage9_Click
+
+#region Control Helper Functions
+function Update-ToolStripComboBox
+{
+<#
+	.SYNOPSIS
+		This functions helps you load items into a ToolStripComboBox.
+	
+	.DESCRIPTION
+		Use this function to dynamically load items into the ToolStripComboBox control.
+	
+	.PARAMETER ToolStripComboBox
+		The ToolStripComboBox control you want to add items to.
+	
+	.PARAMETER Items
+		The object or objects you wish to load into the ToolStripComboBox's Items collection.
+	
+	.PARAMETER Append
+		Adds the item(s) to the ToolStripComboBox without clearing the Items collection.
+	
+	.EXAMPLE
+		Update-ToolStripComboBox $toolStripComboBox1 "Red", "White", "Blue"
+	
+	.EXAMPLE
+		Update-ToolStripComboBox $toolStripComboBox1 "Red" -Append
+		Update-ToolStripComboBox $toolStripComboBox1 "White" -Append
+		Update-ToolStripComboBox $toolStripComboBox1 "Blue" -Append
+	
+	.NOTES
+		Additional information about the function.
+#>
+	
+	param
+	(
+		[Parameter(Mandatory = $true)]
+		[ValidateNotNull()]
+		[System.Windows.Forms.ToolStripComboBox]
+		$ToolStripComboBox,
+		[Parameter(Mandatory = $true)]
+		[ValidateNotNull()]
+		$Items,
+		[switch]
+		$Append
+	)
+	
+	if (-not $Append)
+	{
+		$ToolStripComboBox.Items.Clear()
+	}
+	
+	if ($Items -is [Object[]])
+	{
+		$ToolStripComboBox.Items.AddRange($Items)
+	}
+	elseif ($Items -is [Array])
+	{
+		$ToolStripComboBox.BeginUpdate()
+		foreach ($obj in $Items)
+		{
+			$ToolStripComboBox.Items.Add($obj)
+		}
+		$ToolStripComboBox.EndUpdate()
+	}
+	else
+	{
+		$ToolStripComboBox.Items.Add($Items)
+	}
+}
+
+function Show-NotifyIcon
+{
+<#
+	.SYNOPSIS
+		Displays a NotifyIcon's balloon tip message in the taskbar's notification area.
+	
+	.DESCRIPTION
+		Displays a NotifyIcon's a balloon tip message in the taskbar's notification area.
+		
+	.PARAMETER NotifyIcon
+     	The NotifyIcon control that will be displayed.
+	
+	.PARAMETER BalloonTipText
+     	Sets the text to display in the balloon tip.
+	
+	.PARAMETER BalloonTipTitle
+		Sets the Title to display in the balloon tip.
+	
+	.PARAMETER BalloonTipIcon	
+		The icon to display in the ballon tip.
+	
+	.PARAMETER Timeout	
+		The time the ToolTip Balloon will remain visible in milliseconds. 
+		Default: 0 - Uses windows default.
+#>
+	 param(
+	  [Parameter(Mandatory = $true, Position = 0)]
+	  [ValidateNotNull()]
+	  [System.Windows.Forms.NotifyIcon]$NotifyIcon,
+	  [Parameter(Mandatory = $true, Position = 1)]
+	  [ValidateNotNullOrEmpty()]
+	  [String]$BalloonTipText,
+	  [Parameter(Position = 2)]
+	  [String]$BalloonTipTitle = '',
+	  [Parameter(Position = 3)]
+	  [System.Windows.Forms.ToolTipIcon]$BalloonTipIcon = 'None',
+	  [Parameter(Position = 4)]
+	  [int]$Timeout = 0
+ 	)
+	
+	if($null -eq $NotifyIcon.Icon)
+	{
+		#Set a Default Icon otherwise the balloon will not show
+		$NotifyIcon.Icon = [System.Drawing.Icon]::ExtractAssociatedIcon([System.Windows.Forms.Application]::ExecutablePath)
+	}
+	
+	$NotifyIcon.ShowBalloonTip($Timeout, $BalloonTipTitle, $BalloonTipText, $BalloonTipIcon)
+}
+
+
+
+function Replace-PlaceHolder 
+{
+	<#
+	.SYNOPSIS
+		Replaces the place holder control with another.
+
+	.DESCRIPTION
+		Replaces the place holder control with another.
+	
+	.PARAMETER PlaceHolderControl
+		The control you wish to replace.
+
+	.PARAMETER ReplaceControl
+		The control that replaces the place holder.
+	
+	.EXAMPLE
+		Replace-PlaceHolder -PlaceHolderControl $elementHostPlaceholder -ReplaceControl $elementhost
+#>
+	Param([System.Windows.Forms.Control]$PlaceHolderControl,
+		[System.Windows.Forms.Control]$ReplaceControl)
+	
+	$ReplaceControl.Location = $PlaceHolderControl.Location;
+	$ReplaceControl.Size = $PlaceHolderControl.Size;
+	$ReplaceControl.TabIndex = $PlaceHolderControl.TabIndex;
+	$ReplaceControl.Dock = $PlaceHolderControl.Dock 
+	$ReplaceControl.Anchor = $PlaceHolderControl.Anchor
+	$PlaceHolderControl.Parent.Controls.Add($ReplaceControl)
+	$PlaceHolderControl.Parent.Controls.Remove($PlaceHolderControl)
+	$PlaceHolderControl.Visible = $false
+}
+
+function Update-ElementHost
+{
+<#
+	.SYNOPSIS
+		Loads XAML into a ElementHost
+
+	.DESCRIPTION
+		Loads XAML into a ElementHost, which then displays the WPF control.
+
+	.RETURNS
+		Returns the WPF control
+	
+	.PARAMETER ElementHost
+		The ElementHost control to load the XAML.
+
+	.PARAMETER XAML
+		The XAML to create the WPF Control
+	
+	.EXAMPLE
+		Update-ElementHost -Elementhost $elementhost1 -XAML $xaml | Out-Null
+#>
+	Param(
+		[ValidateNotNull()]
+		[Parameter(Mandatory=$true)]
+		[System.Windows.Forms.Integration.ElementHost]$Elementhost,
+		[ValidateNotNull()]
+		[Parameter(Mandatory=$true)]
+		[Xml]$XAML)
+		
+	$reader = Microsoft.PowerShell.Utility\New-Object System.Xml.XmlNodeReader $XAML
+	
+	if(-not $reader)
+	{
+		return
+	}
+	
+	$WPFControl = [Windows.Markup.XamlReader]::Load( $reader )
+	$Elementhost.Child = $WPFControl
+	
+	return $WPFControl
+}
+
+
+
+
+function Update-ComboBox
+{
+<#
+	.SYNOPSIS
+		This functions helps you load items into a ComboBox.
+	
+	.DESCRIPTION
+		Use this function to dynamically load items into the ComboBox control.
+	
+	.PARAMETER ComboBox
+		The ComboBox control you want to add items to.
+	
+	.PARAMETER Items
+		The object or objects you wish to load into the ComboBox's Items collection.
+	
+	.PARAMETER DisplayMember
+		Indicates the property to display for the items in this control.
+		
+	.PARAMETER ValueMember
+		Indicates the property to use for the value of the control.
+	
+	.PARAMETER Append
+		Adds the item(s) to the ComboBox without clearing the Items collection.
+	
+	.EXAMPLE
+		Update-ComboBox $combobox1 "Red", "White", "Blue"
+	
+	.EXAMPLE
+		Update-ComboBox $combobox1 "Red" -Append
+		Update-ComboBox $combobox1 "White" -Append
+		Update-ComboBox $combobox1 "Blue" -Append
+	
+	.EXAMPLE
+		Update-ComboBox $combobox1 (Get-Process) "ProcessName"
+	
+	.NOTES
+		Additional information about the function.
+#>
+	
+	param
+	(
+		[Parameter(Mandatory = $true)]
+		[ValidateNotNull()]
+		[System.Windows.Forms.ComboBox]
+		$ComboBox,
+		[Parameter(Mandatory = $true)]
+		[ValidateNotNull()]
+		$Items,
+		[Parameter(Mandatory = $false)]
+		[string]$DisplayMember,
+		[Parameter(Mandatory = $false)]
+		[string]$ValueMember,
+		[switch]
+		$Append
+	)
+	
+	if (-not $Append)
+	{
+		$ComboBox.Items.Clear()
+	}
+	
+	if ($Items -is [Object[]])
+	{
+		$ComboBox.Items.AddRange($Items)
+	}
+	elseif ($Items -is [System.Collections.IEnumerable])
+	{
+		$ComboBox.BeginUpdate()
+		foreach ($obj in $Items)
+		{
+			$ComboBox.Items.Add($obj)
+		}
+		$ComboBox.EndUpdate()
+	}
+	else
+	{
+		$ComboBox.Items.Add($Items)
+	}
+	
+	$ComboBox.DisplayMember = $DisplayMember
+	$ComboBox.ValueMember = $ValueMember
+}
+#endregion
+
+
+
+$linklabelSetupErrors_LinkClicked=[System.Windows.Forms.LinkLabelLinkClickedEventHandler]{
+#Event Argument: $_ = [System.Windows.Forms.LinkLabelLinkClickedEventArgs]
+	#TODO: Place custom script here
+    Microsoft.PowerShell.Management\Invoke-Item "C:\$Windows.*BT\Sources\Panther\setupact.log"
+}#end linklabelSetupErrors_LinkClicked
+
+$linklabelRollback_LinkClicked=[System.Windows.Forms.LinkLabelLinkClickedEventHandler]{
+#Event Argument: $_ = [System.Windows.Forms.LinkLabelLinkClickedEventArgs]
+	#TODO: Place custom script here
+    ## FIX THIS >>> Invoke-Item $Windows.*BT\Sources\Rollback
+}#end linklabelRollback_LinkClicked
+
+$linklabelMigrationLog_LinkClicked=[System.Windows.Forms.LinkLabelLinkClickedEventHandler]{
+#Event Argument: $_ = [System.Windows.Forms.LinkLabelLinkClickedEventArgs]
+	#TODO: Place custom script here
+    Microsoft.PowerShell.Management\Invoke-Item C:\Windows\Panther
+}#end linklabelMigrationLog_LinkClicked
+
+$linklabelWSUS_LinkClicked=[System.Windows.Forms.LinkLabelLinkClickedEventHandler]{
+#Event Argument: $_ = [System.Windows.Forms.LinkLabelLinkClickedEventArgs]
+	#TODO: Place custom script here
+    Microsoft.PowerShell.Management\Invoke-Item C:\Windows\Logs\Mosetup\BlueBox.log
+}#end linklabelWSUS_LinkClicked
+
+$linklabelPNPInstalls_LinkClicked=[System.Windows.Forms.LinkLabelLinkClickedEventHandler]{
+#Event Argument: $_ = [System.Windows.Forms.LinkLabelLinkClickedEventArgs]
+	#TODO: Place custom script here
+    Microsoft.PowerShell.Management\Invoke-Item C:\WINDOWS\Inf\Setupapi.log
+}#end linklabelPNPInstalls_LinkClicked
+
+$linklabelSysprepLogs_LinkClicked=[System.Windows.Forms.LinkLabelLinkClickedEventHandler]{
+#Event Argument: $_ = [System.Windows.Forms.LinkLabelLinkClickedEventArgs]
+	#TODO: Place custom script here
+    Microsoft.PowerShell.Management\Invoke-Item C:\System32\Sysprep\Panther
+}#end linklabelSysprepLogs_LinkClicked
+
+$linklabelApplicationInstalls_LinkClicked=[System.Windows.Forms.LinkLabelLinkClickedEventHandler]{
+#Event Argument: $_ = [System.Windows.Forms.LinkLabelLinkClickedEventArgs]
+	#TODO: Place custom script here
+    Microsoft.PowerShell.Management\Invoke-Item C:\Windows\INF\setupapi.app.log
+}#end linklabelApplicationInstalls_LinkClicked
+
+$linklabelWindowsUpdates_LinkClicked=[System.Windows.Forms.LinkLabelLinkClickedEventHandler]{
+#Event Argument: $_ = [System.Windows.Forms.LinkLabelLinkClickedEventArgs]
+	#TODO: Place custom script here
+    Microsoft.PowerShell.Management\Invoke-Item C:\WINDOWS\WindowsUpdate.log
+}#end linklabelWindowsUpdates_LinkClicked
+
+$linklabelSoftwareUpdateStatus_LinkClicked=[System.Windows.Forms.LinkLabelLinkClickedEventHandler]{
+#Event Argument: $_ = [System.Windows.Forms.LinkLabelLinkClickedEventArgs]
+	#TODO: Place custom script here
+    Microsoft.PowerShell.Management\Invoke-Item C:\WINDOWS\SoftwareDistribution\ReportingEvents.log
+}#end linklabelSoftwareUpdateStatus_LinkClicked
+
+$linklabelRuntimeLogs_LinkClicked=[System.Windows.Forms.LinkLabelLinkClickedEventHandler]{
+#Event Argument: $_ = [System.Windows.Forms.LinkLabelLinkClickedEventArgs]
+	#TODO: Place custom script here
+    Microsoft.PowerShell.Management\Invoke-Item "C:\PROGRAMDATA\Microsoft\Microsoft Antimalware\Support"
+}#end linklabelRuntimeLogs_LinkClicked
+
+$linklabelInstallationLogs_LinkClicked=[System.Windows.Forms.LinkLabelLinkClickedEventHandler]{
+#Event Argument: $_ = [System.Windows.Forms.LinkLabelLinkClickedEventArgs]
+	#TODO: Place custom script here
+    Microsoft.PowerShell.Management\Invoke-Item "C:\PROGRAMDATA\Microsoft\Microsoft Security Client\Support"
+}#end linklabelInstallationLogs_LinkClicked
+
+
+
+$chartDiskSpace_VisibleChanged3={
+	if($this.Visible)
+	{
+		Update-DiskChart $this
+	}
+}
+
+$buttonInstallAllAvailableW_Click={
+	#TODO: Place custom script here
+	$richtextbox1.Text =
+	Microsoft.PowerShell.Management\Start-Process powershell Install-WindowsUpdate -AcceptAll -Install | Microsoft.PowerShell.Utility\Out-File "c:\logs\$(Microsoft.PowerShell.Utility\Get-Date -Format yyyy-MM-dd)-WindowsUpdate.log" -force| Microsoft.PowerShell.Utility\Format-List | Microsoft.PowerShell.Utility\Out-String
+	
+}#end buttonInstallAllAvailableW_Click
+
+$buttonDISMRepairWindowsLon_Click={
+	#TODO: Place custom script here
+	Dism\Repair-WindowsImage -Online -RestoreHealth​ 
+}#end buttonDISMRepairWindowsLon_Click
+
+
+
+$buttonWhatsMyPCName_Click={
+	#TODO: Place custom script here
+	$richtextbox1.Text =
+	Microsoft.PowerShell.Utility\Invoke-Expression -Command 'hostname'
+	$statusbar.Text = "Hey, that is a really nice name. Good thing to know, you'll need it often."
+}
+
+$buttonAppIssuesDeleteAppDa_Click={
+	#TODO: Place custom script here
+	Microsoft.PowerShell.Management\Get-ChildItem C:\Users\$env:username\AppData\Local\Temp | Microsoft.PowerShell.Management\Remove-Item -recurse -ErrorAction SilentlyContinue
+}
+
+
+$pictureboxSplashScreenHidden_Click={
+	#TODO: Place custom script here
+	
+}#end pictureboxSplashScreenHidden_Click
+
+$buttonInstallOnlyWindowsCr_Click={
+	#TODO: Place custom script here
+	$richtextbox1.Text =
+	PSWindowsUpdate\Get-WindowsUpdate -category "Critical Updates" -AcceptAll -Install
+}#end buttonInstallOnlyWindowsCr_Click
+
+$buttonInstallOnlyWindowsSe_Click={
+	#TODO: Place custom script here
+	$richtextbox1.Text =
+	PSWindowsUpdate\Get-WindowsUpdate -category "SecurityUpdates" -AcceptAll -Install
+}#end buttonInstallOnlyWindowsSe_Click
+
+$buttonWhatsMyUserID_Click={
+	#TODO: Place custom script here
+	$richtextbox1.Text =
+	$env:UserName
+	$statusbar.Text = "Hi $env:UserName"
+}#end buttonWhatsMyUserID_Click
+
+$buttonBrowserAndMSTeamsCle_Click={
+	#TODO: Place custom script here
+	$richtextbox1.Text =
+	powershell Invoke-Command -AsJob -ArgumentList ' -command . .\ImportPs1\drive-clean.ps1'
+	$statusbar.Text = "Boom! Done!"
+}#end buttonBrowserAndMSTeamsCle_Click
+
+$buttonIsMyHardDriveEncrypt_Click={
+	#TODO: Place custom script here
+	$richtextbox1.Text = "Hey! Hold tight I need to grab my microscope and take a close look at the primary OS hard drive...I'll be back."
+	$richtextbox1.Text =
+	manage-bde -status C: | Microsoft.PowerShell.Utility\Format-List | Microsoft.PowerShell.Utility\Out-String
+	$statusbar.Text = "Take a look at Percentage Encrypted and if it is not 100% then your hard drive is not encrypted."
+}#end buttonIsMyHardDriveEncrypt_Click
+
+$buttonForClarityAllCommand_Click={
+	#TODO: Place custom script here
+	
+}#end buttonForClarityAllCommand_Click
+
+
+
+
+$linklabelGentlyWipeMonitors_LinkClicked=[System.Windows.Forms.LinkLabelLinkClickedEventHandler]{
+#Event Argument: $_ = [System.Windows.Forms.LinkLabelLinkClickedEventArgs]
+	#TODO: Place custom script here
+	
+}#end linklabelGentlyWipeMonitors_LinkClicked
+
+$linklabelCleanMouse_LinkClicked=[System.Windows.Forms.LinkLabelLinkClickedEventHandler]{
+#Event Argument: $_ = [System.Windows.Forms.LinkLabelLinkClickedEventArgs]
+	#TODO: Place custom script here
+	
+}#end linklabelCleanMouse_LinkClicked
+
+$linklabelWipeKeyboard_LinkClicked=[System.Windows.Forms.LinkLabelLinkClickedEventHandler]{
+#Event Argument: $_ = [System.Windows.Forms.LinkLabelLinkClickedEventArgs]
+	#TODO: Place custom script here
+	
+}#end linklabelWipeKeyboard_LinkClicked
+
+$linklabelTipKeyboardUpsideDow_LinkClicked=[System.Windows.Forms.LinkLabelLinkClickedEventHandler]{
+#Event Argument: $_ = [System.Windows.Forms.LinkLabelLinkClickedEventArgs]
+	#TODO: Place custom script here
+	
+}#end linklabelTipKeyboardUpsideDow_LinkClicked
+
+$linklabelGivePCFreeSpaceAroun_LinkClicked=[System.Windows.Forms.LinkLabelLinkClickedEventHandler]{
+#Event Argument: $_ = [System.Windows.Forms.LinkLabelLinkClickedEventArgs]
+	#TODO: Place custom script here
+	
+}#end linklabelGivePCFreeSpaceAroun_LinkClicked
+
+$linklabelCleanWithCompressedA_LinkClicked=[System.Windows.Forms.LinkLabelLinkClickedEventHandler]{
+#Event Argument: $_ = [System.Windows.Forms.LinkLabelLinkClickedEventArgs]
+	#TODO: Place custom script here
+	
+}#end linklabelCleanWithCompressedA_LinkClicked
+
+$linklabelInstallAllPCVendorUp_LinkClicked=[System.Windows.Forms.LinkLabelLinkClickedEventHandler]{
+#Event Argument: $_ = [System.Windows.Forms.LinkLabelLinkClickedEventArgs]
+	#TODO: Place custom script here
+	
+}#end linklabelInstallAllPCVendorUp_LinkClicked
+
+$linklabelInstallAllWindowsUpd_LinkClicked=[System.Windows.Forms.LinkLabelLinkClickedEventHandler]{
+#Event Argument: $_ = [System.Windows.Forms.LinkLabelLinkClickedEventArgs]
+	#TODO: Place custom script here
+	
+}#end linklabelInstallAllWindowsUpd_LinkClicked
+
+$linklabelInstallSoftwareProgr_LinkClicked=[System.Windows.Forms.LinkLabelLinkClickedEventHandler]{
+#Event Argument: $_ = [System.Windows.Forms.LinkLabelLinkClickedEventArgs]
+	#TODO: Place custom script here
+	
+}#end linklabelInstallSoftwareProgr_LinkClicked
+
+$linklabelEatingAndDrinkingAro_LinkClicked=[System.Windows.Forms.LinkLabelLinkClickedEventHandler]{
+#Event Argument: $_ = [System.Windows.Forms.LinkLabelLinkClickedEventArgs]
+	#TODO: Place custom script here
+	
+}#end linklabelEatingAndDrinkingAro_LinkClicked
+
+$linklabelHavingPCInWarmOrhotE_LinkClicked=[System.Windows.Forms.LinkLabelLinkClickedEventHandler]{
+#Event Argument: $_ = [System.Windows.Forms.LinkLabelLinkClickedEventArgs]
+	#TODO: Place custom script here
+	
+}#end linklabelHavingPCInWarmOrhotE_LinkClicked
+
+$linklabelWebSurfingSketchySit_LinkClicked=[System.Windows.Forms.LinkLabelLinkClickedEventHandler]{
+#Event Argument: $_ = [System.Windows.Forms.LinkLabelLinkClickedEventArgs]
+	#TODO: Place custom script here
+	
+}#end linklabelWebSurfingSketchySit_LinkClicked
+
+$linklabelHardPoweringOffThePC_LinkClicked=[System.Windows.Forms.LinkLabelLinkClickedEventHandler]{
+#Event Argument: $_ = [System.Windows.Forms.LinkLabelLinkClickedEventArgs]
+	#TODO: Place custom script here
+	
+}#end linklabelHardPoweringOffThePC_LinkClicked
+
+$linklabelNoiseInsideTheComput_LinkClicked=[System.Windows.Forms.LinkLabelLinkClickedEventHandler]{
+#Event Argument: $_ = [System.Windows.Forms.LinkLabelLinkClickedEventArgs]
+	#TODO: Place custom script here
+	
+}#end linklabelNoiseInsideTheComput_LinkClicked
+
+$linklabelClunkingClickingGrin_LinkClicked=[System.Windows.Forms.LinkLabelLinkClickedEventHandler]{
+#Event Argument: $_ = [System.Windows.Forms.LinkLabelLinkClickedEventArgs]
+	#TODO: Place custom script here
+	
+}#end linklabelClunkingClickingGrin_LinkClicked
+
+$linklabelExcessiveHeatPermeat_LinkClicked=[System.Windows.Forms.LinkLabelLinkClickedEventHandler]{
+#Event Argument: $_ = [System.Windows.Forms.LinkLabelLinkClickedEventArgs]
+	#TODO: Place custom script here
+	
+}#end linklabelExcessiveHeatPermeat_LinkClicked
+
+$linklabelWindowsBlueScreens_LinkClicked=[System.Windows.Forms.LinkLabelLinkClickedEventHandler]{
+#Event Argument: $_ = [System.Windows.Forms.LinkLabelLinkClickedEventArgs]
+	#TODO: Place custom script here
+	
+}#end linklabelWindowsBlueScreens_LinkClicked
+
+$linklabelAnyErrorsFromYourPC_LinkClicked=[System.Windows.Forms.LinkLabelLinkClickedEventHandler]{
+#Event Argument: $_ = [System.Windows.Forms.LinkLabelLinkClickedEventArgs]
+	#TODO: Place custom script here
+	
+}#end linklabelAnyErrorsFromYourPC_LinkClicked
+
+$linklabelAnySoftwareAppsCrash_LinkClicked=[System.Windows.Forms.LinkLabelLinkClickedEventHandler]{
+#Event Argument: $_ = [System.Windows.Forms.LinkLabelLinkClickedEventArgs]
+	#TODO: Place custom script here
+	
+}#end linklabelAnySoftwareAppsCrash_LinkClicked
+
+$linklabelAnyPCCrashing_LinkClicked=[System.Windows.Forms.LinkLabelLinkClickedEventHandler]{
+#Event Argument: $_ = [System.Windows.Forms.LinkLabelLinkClickedEventArgs]
+	#TODO: Place custom script here
+	
+}#end linklabelAnyPCCrashing_LinkClicked
+
+$linklabelIrraticWindowsOrMous_LinkClicked=[System.Windows.Forms.LinkLabelLinkClickedEventHandler]{
+#Event Argument: $_ = [System.Windows.Forms.LinkLabelLinkClickedEventArgs]
+	#TODO: Place custom script here
+	
+}#end linklabelIrraticWindowsOrMous_LinkClicked
+
+$linklabelUnmannedWindowOrMous_LinkClicked=[System.Windows.Forms.LinkLabelLinkClickedEventHandler]{
+#Event Argument: $_ = [System.Windows.Forms.LinkLabelLinkClickedEventArgs]
+	#TODO: Place custom script here
+	
+}#end linklabelUnmannedWindowOrMous_LinkClicked
+
+$linklabelRebootYourPC_LinkClicked=[System.Windows.Forms.LinkLabelLinkClickedEventHandler]{
+#Event Argument: $_ = [System.Windows.Forms.LinkLabelLinkClickedEventArgs]
+	#TODO: Place custom script here
+	
+}#end linklabelRebootYourPC_LinkClicked
+
+$linklabelUndoAnyChangesBefore_LinkClicked=[System.Windows.Forms.LinkLabelLinkClickedEventHandler]{
+#Event Argument: $_ = [System.Windows.Forms.LinkLabelLinkClickedEventArgs]
+	#TODO: Place custom script here
+	
+}#end linklabelUndoAnyChangesBefore_LinkClicked
+
+$linklabelBootPCStandaloneMoni_LinkClicked=[System.Windows.Forms.LinkLabelLinkClickedEventHandler]{
+#Event Argument: $_ = [System.Windows.Forms.LinkLabelLinkClickedEventArgs]
+	#TODO: Place custom script here
+	
+}#end linklabelBootPCStandaloneMoni_LinkClicked
+
+$linklabelLongShutdownOrBootup_LinkClicked=[System.Windows.Forms.LinkLabelLinkClickedEventHandler]{
+#Event Argument: $_ = [System.Windows.Forms.LinkLabelLinkClickedEventArgs]
+	#TODO: Place custom script here
+	
+}#end linklabelLongShutdownOrBootup_LinkClicked
+
+$linklabelDoNotHardPowerOffUnl_LinkClicked=[System.Windows.Forms.LinkLabelLinkClickedEventHandler]{
+#Event Argument: $_ = [System.Windows.Forms.LinkLabelLinkClickedEventArgs]
+	#TODO: Place custom script here
+	
+}#end linklabelDoNotHardPowerOffUnl_LinkClicked
+
+$linklabelCloseAllAppsBeforeSh_LinkClicked=[System.Windows.Forms.LinkLabelLinkClickedEventHandler]{
+#Event Argument: $_ = [System.Windows.Forms.LinkLabelLinkClickedEventArgs]
+	#TODO: Place custom script here
+	
+}#end linklabelCloseAllAppsBeforeSh_LinkClicked
+
+$linklabelRestartPCWeekly_LinkClicked=[System.Windows.Forms.LinkLabelLinkClickedEventHandler]{
+#Event Argument: $_ = [System.Windows.Forms.LinkLabelLinkClickedEventArgs]
+	#TODO: Place custom script here
+	
+}#end linklabelRestartPCWeekly_LinkClicked
+
+$linklabelRunDiskCleanup_LinkClicked=[System.Windows.Forms.LinkLabelLinkClickedEventHandler]{
+#Event Argument: $_ = [System.Windows.Forms.LinkLabelLinkClickedEventArgs]
+	#TODO: Place custom script here
+	
+}#end linklabelRunDiskCleanup_LinkClicked
+
+$linklabelRunDiskDefragmenter_LinkClicked=[System.Windows.Forms.LinkLabelLinkClickedEventHandler]{
+#Event Argument: $_ = [System.Windows.Forms.LinkLabelLinkClickedEventArgs]
+	#TODO: Place custom script here
+	
+}#end linklabelRunDiskDefragmenter_LinkClicked
+
+$linklabelRunCheckDiskTool_LinkClicked=[System.Windows.Forms.LinkLabelLinkClickedEventHandler]{
+#Event Argument: $_ = [System.Windows.Forms.LinkLabelLinkClickedEventArgs]
+	#TODO: Place custom script here
+	
+}#end linklabelRunCheckDiskTool_LinkClicked
+
+$linklabelRunSystemFileChecker_LinkClicked=[System.Windows.Forms.LinkLabelLinkClickedEventHandler]{
+#Event Argument: $_ = [System.Windows.Forms.LinkLabelLinkClickedEventArgs]
+	#TODO: Place custom script here
+	
+}#end linklabelRunSystemFileChecker_LinkClicked
+
+$linklabelRunDISMOnlineRestore_LinkClicked=[System.Windows.Forms.LinkLabelLinkClickedEventHandler]{
+#Event Argument: $_ = [System.Windows.Forms.LinkLabelLinkClickedEventArgs]
+	#TODO: Place custom script here
+	
+}#end linklabelRunDISMOnlineRestore_LinkClicked
+
+$linklabelRunVirusScanSoftware_LinkClicked=[System.Windows.Forms.LinkLabelLinkClickedEventHandler]{
+#Event Argument: $_ = [System.Windows.Forms.LinkLabelLinkClickedEventArgs]
+	#TODO: Place custom script here
+	
+}#end linklabelRunVirusScanSoftware_LinkClicked
+
+$linklabelBackupAllFilesToSeco_LinkClicked=[System.Windows.Forms.LinkLabelLinkClickedEventHandler]{
+#Event Argument: $_ = [System.Windows.Forms.LinkLabelLinkClickedEventArgs]
+	#TODO: Place custom script here
+	
+}#end linklabelBackupAllFilesToSeco_LinkClicked
+
+$linklabelCreateAMasterBackupI_LinkClicked=[System.Windows.Forms.LinkLabelLinkClickedEventHandler]{
+#Event Argument: $_ = [System.Windows.Forms.LinkLabelLinkClickedEventArgs]
+	#TODO: Place custom script here
+	
+}#end linklabelCreateAMasterBackupI_LinkClicked
+
+$linklabelAvoidSketchyWebsites_LinkClicked=[System.Windows.Forms.LinkLabelLinkClickedEventHandler]{
+#Event Argument: $_ = [System.Windows.Forms.LinkLabelLinkClickedEventArgs]
+	#TODO: Place custom script here
+	
+}#end linklabelAvoidSketchyWebsites_LinkClicked
+
+$linklabelInstallOnlyGoodReput_LinkClicked=[System.Windows.Forms.LinkLabelLinkClickedEventHandler]{
+#Event Argument: $_ = [System.Windows.Forms.LinkLabelLinkClickedEventArgs]
+	#TODO: Place custom script here
+	
+}#end linklabelInstallOnlyGoodReput_LinkClicked
+
+$linklabelChangePasswordOften_LinkClicked=[System.Windows.Forms.LinkLabelLinkClickedEventHandler]{
+#Event Argument: $_ = [System.Windows.Forms.LinkLabelLinkClickedEventArgs]
+	#TODO: Place custom script here
+	
+}#end linklabelChangePasswordOften_LinkClicked
+
+$linklabelUseAPasswordManager_LinkClicked=[System.Windows.Forms.LinkLabelLinkClickedEventHandler]{
+#Event Argument: $_ = [System.Windows.Forms.LinkLabelLinkClickedEventArgs]
+	#TODO: Place custom script here
+	
+}#end linklabelUseAPasswordManager_LinkClicked
+
+$linklabelUseFullHardDriveEncr_LinkClicked=[System.Windows.Forms.LinkLabelLinkClickedEventHandler]{
+#Event Argument: $_ = [System.Windows.Forms.LinkLabelLinkClickedEventArgs]
+	#TODO: Place custom script here
+	
+}#end linklabelUseFullHardDriveEncr_LinkClicked
+
+$linklabelLimitSocialMediaInfo_LinkClicked=[System.Windows.Forms.LinkLabelLinkClickedEventHandler]{
+#Event Argument: $_ = [System.Windows.Forms.LinkLabelLinkClickedEventArgs]
+	#TODO: Place custom script here
+	
+}#end linklabelLimitSocialMediaInfo_LinkClicked
+
+$linklabelUse2FAOrOnetimePassc_LinkClicked=[System.Windows.Forms.LinkLabelLinkClickedEventHandler]{
+#Event Argument: $_ = [System.Windows.Forms.LinkLabelLinkClickedEventArgs]
+	#TODO: Place custom script here
+	
+}#end linklabelUse2FAOrOnetimePassc_LinkClicked
+
+$linklabelUseHardwareKeys_LinkClicked=[System.Windows.Forms.LinkLabelLinkClickedEventHandler]{
+#Event Argument: $_ = [System.Windows.Forms.LinkLabelLinkClickedEventArgs]
+	#TODO: Place custom script here
+	
+}#end linklabelUseHardwareKeys_LinkClicked
+
+$linklabelUseVPNSoftware_LinkClicked=[System.Windows.Forms.LinkLabelLinkClickedEventHandler]{
+#Event Argument: $_ = [System.Windows.Forms.LinkLabelLinkClickedEventArgs]
+	#TODO: Place custom script here
+	
+}#end linklabelUseVPNSoftware_LinkClicked
+
+$linklabelUsePrivateEncryptedE_LinkClicked=[System.Windows.Forms.LinkLabelLinkClickedEventHandler]{
+#Event Argument: $_ = [System.Windows.Forms.LinkLabelLinkClickedEventArgs]
+	#TODO: Place custom script here
+	
+}#end linklabelUsePrivateEncryptedE_LinkClicked
+
+
+
+$buttonInstallPowerShell7_Click={
+	#TODO: Place custom script here
+	$richtextbox1.Text =
+	powershell iex "& { $(Microsoft.PowerShell.Utility\Invoke-RestMethod https://aka.ms/install-powershell.ps1) } -UseMSI -Quiet" | Microsoft.PowerShell.Utility\Format-Table | Microsoft.PowerShell.Utility\Out-String
+	$statusbar.Text = "PowerShell 7 is being downloaded and installed, please wait."
+}#end buttonInstallPowerShell7_Click
+
+$buttonCRedistributablesBun_Click={
+	#TODO: Place custom script here
+	$richtextbox1.Text =
+	powershell choco install vcredist-all | Microsoft.PowerShell.Utility\Format-Table | Microsoft.PowerShell.Utility\Out-String
+	$statusbar.Text = "Packages are being downloaded, please wait."
+}#end buttonCRedistributablesBun_Click
+
+
+$buttonMSIInstalled_Click={
+	#TODO: Place custom script here
+	$statusbar.Text = "Hey! Hold tight, Sip your coffee...I'll be back.Give me like 30 seconds."
+	$richtextbox1.Text =
+	CimCmdlets\Get-CimInstance -ClassName Win32_Product -NameSpace root/CIMV2 | Microsoft.PowerShell.Utility\Sort-Object -Property 'Name' | Microsoft.PowerShell.Utility\Format-Table -Property 'Name', 'Version' | Microsoft.PowerShell.Utility\Out-String
+	$statusbar.Text = "BOOM BOOM DONE!"
+}#end buttonMSIInstalled_Click
+
+
+
+
+
+$buttonRunGPUpdateForce_Click={
+	#TODO: Place custom script here
+	$richTextBox1.Text =
+	Microsoft.PowerShell.Core\Invoke-Command -ScriptBlock { gpupdate /force } | Microsoft.PowerShell.Utility\Out-String
+	$statusbar.Text = "GPUpdate with the FORCE switch has been executed and will complete shortly."
+} #end buttonRunGPUpdateForce_Click
+
+$cfgactionitems_Click={
+	#TODO: Place custom script here
+	$richTextBox1.Text =
+	
+	powershell . '.\ImportPs1\Start-CMClientAction.ps1' | Microsoft.PowerShell.Utility\Out-String
+	$statusbar.Text = "Started Configuration Manager Action Items.Your requests have been queued."
+	
+}#end cfgactionitems_Click
+
+
+
+$linklabelAllWindowsEventViewe_LinkClicked=[System.Windows.Forms.LinkLabelLinkClickedEventHandler]{
+#Event Argument: $_ = [System.Windows.Forms.LinkLabelLinkClickedEventArgs]
+	#TODO: Place custom script here
+	
+}#end linklabelAllWindowsEventViewe_LinkClicked
+
+$linklabelXWindowsPanther_LinkClicked=[System.Windows.Forms.LinkLabelLinkClickedEventHandler]{
+#Event Argument: $_ = [System.Windows.Forms.LinkLabelLinkClickedEventArgs]
+	#TODO: Place custom script here
+	
+}#end linklabelXWindowsPanther_LinkClicked
+
+$linklabelCWindowsPanther_LinkClicked=[System.Windows.Forms.LinkLabelLinkClickedEventHandler]{
+#Event Argument: $_ = [System.Windows.Forms.LinkLabelLinkClickedEventArgs]
+	#TODO: Place custom script here
+	
+}#end linklabelCWindowsPanther_LinkClicked
+
+$linklabelCWindowsINFSetupapil_LinkClicked=[System.Windows.Forms.LinkLabelLinkClickedEventHandler]{
+#Event Argument: $_ = [System.Windows.Forms.LinkLabelLinkClickedEventArgs]
+	#TODO: Place custom script here
+	
+}#end linklabelCWindowsINFSetupapil_LinkClicked
+
+$linklabelCWINDOWSBTSourcesPan_LinkClicked=[System.Windows.Forms.LinkLabelLinkClickedEventHandler]{
+#Event Argument: $_ = [System.Windows.Forms.LinkLabelLinkClickedEventArgs]
+	#TODO: Place custom script here
+	
+}#end linklabelCWINDOWSBTSourcesPan_LinkClicked
+
+$labelClickHereToGetCopyOf_Click={
+	#TODO: Place custom script here
+	$statusbar.Text = "Options are: Application, Security, System and some names from Out-Grid List will work."
+	$statusbar.Visible = $true
+	
+	$richtextbox1.Text =
+	Microsoft.PowerShell.Management\Get-EventLog -Newest 20 | Microsoft.PowerShell.Utility\Select-Object Index, EventID, Source, Message, MachineName, UserName, TimeGenerated, TimeWritten | Microsoft.PowerShell.Utility\Format-List | Microsoft.PowerShell.Utility\Out-String
+}#end labelClickHereToGetCopyOf_Click
+
+
+
+$allmsstoreapps_Click={
+	#TODO: Place custom script here
+	"Executed:List All Installed Microsoft Store Apps" | Out-File -FilePath C:\Temp\shiroscout.log -Append
+		$richtextbox1.Text =
+		Appx\Get-AppxPackage |  Sort-Object -Property 'Name'| Format-Table -Property 'Name' | Microsoft.PowerShell.Utility\Out-String
+		$statusbar.Text = "OK, I got them. Did you know the tool WSRESET can rebuild all your store files if you are having issues?"
+		
+	
+}#end allmsstoreapps_Click
+
+$allinstalledsoftware_Click = {
+	#TODO: Place custom script here
+	"Executed:List All Installed Software" | Out-File -FilePath C:\Temp\shiroscout.log -Append
+		$richtextbox1.Text =
+		Microsoft.PowerShell.Management\Get-ItemProperty HKLM:\Software\Wow6432Node\Microsoft\Windows\CurrentVersion\Uninstall\* | Microsoft.PowerShell.Utility\Sort-Object -Property 'DisplayName' | Microsoft.PowerShell.Utility\Format-Table -Property 'DisplayName' -Autosize | Microsoft.PowerShell.Utility\Out-String
+		
+		$statusbar.Text = "Your wish is my command.Boom! Done!"
+		$statusbar.Visible = $true
+		Microsoft.PowerShell.Utility\Start-Sleep -Seconds 2
+}#end allinstalledsoftware_Click
+
+
+
+$msiinstalledapps_Click={
+	#TODO: Place custom script here
+	"Executed:List MSI Installer Apps" | Out-File -FilePath C:\Temp\shiroscout.log -Append
+		$this.Enabled = $False
+		$richTextBox1.SelectAll();
+		$richTextBox1.Clear();
+		# Output a message on click
+		$richtextbox1.AppendText("The button has been disabled and will be re-enabled when process completes.")
+		
+		# Simulate work
+		Microsoft.PowerShell.Utility\Start-Sleep -Seconds 4
+		
+		# Process the pending messages before enabling the button
+		[System.Windows.Forms.Application]::DoEvents()
+		
+		
+		
+		$statusbar.Text = "Ahh Boss, I hate sorting! Ugg! OK, Hey! Hold tight, Sip your coffee...I'll be back. Give me like 30 seconds."
+		$richtextbox1.Text = "A resource intensive search has been started, please wait."
+	$richTextBox1.Text =
+	#Invoke-Command -ScriptBlock { Get-ItemProperty "HKLM:\Software\Microsoft\Windows\CurrentVersion\Uninstall\*" | Select-Object DisplayName } | Format-Table -Property "DisplayName" | Out-String
+		CimCmdlets\Get-CimInstance -ClassName Win32_Product -NameSpace root/CIMV2 | Microsoft.PowerShell.Utility\Sort-Object -Property 'Name' | Microsoft.PowerShell.Utility\Format-Table -Property 'Name', 'Version' | Microsoft.PowerShell.Utility\Out-String
+		$statusbar.Text = "BOOM BOOM DONE!"
+		$this.Enabled = $True
+		
+	} #end buttonMSIInstallerSoftware_Click
+
+
+
+$htmlassetreport_Click={
+	#TODO: Place custom script here
+	$richTextBox1.Text =
+	Microsoft.PowerShell.Management\Start-Process PowerShell.exe "-noexit", '. .\ImportPs1\FullPCAssetReport.ps1' 
+	$statusbar.Text = "This is an extensive report and takes several minutes to complete and you can view the complete html report from folder C:\temp"
+	
+} #end htmlassetreport_Click
+
+
+
+
+
+$getserialnumber_Click={
+	#TODO: Place custom script here
+	"Executed:Get PC Serial Number" | Out-File -FilePath C:\Temp\shiroscout.log -Append
+	$richTextBox1.Text =
+	wmic bios get serialnumber | Microsoft.PowerShell.Utility\Out-String
+}#end getserialnumber_Click
+
+$getnicinfo_Click={
+	#TODO: Place custom script here
+	"Executed:Get NIC Info" | Out-File -FilePath C:\Temp\shiroscout.log -Append
+	$richTextBox1.Text =
+	NetAdapter\Get-NetAdapter | Microsoft.PowerShell.Utility\Out-String
+	
+}#end getnicinfo_Click
+
+$buttonDeleteAppDataCache_Click={
+	#TODO: Place custom script here
+	"Executed:Delete AppData>Local>Temp directory" | Out-File -FilePath C:\Temp\shiroscout.log -Append
+	$richTextBox1.Text =
+	Microsoft.PowerShell.Management\Remove-Item -Path $env:TEMP -Recurse -ErrorAction SilentlyContinue
+	$statusbar.Text = "AppData>Local>Temp files are being deleted. Any open files are being skipped."
+	
+}#end buttonDeleteAppDataCache_Click
+
+$getscreenshot_Click={
+	#TODO: Place custom script here
+	"Executed:Get Desktop Screenshot" | Out-File -FilePath C:\Temp\shiroscout.log -Append
+	$richTextBox1.Text =
+	powershell . '.\ImportPs1\Screenshot.ps1' | Microsoft.PowerShell.Utility\Out-String
+	$statusbar.Text = "Screenshot has been placed in C:\temp folder."
+	
+	
+}#end getscreenshot_Click
+
+$setwindowsculture_Click={
+	#TODO: Place custom script here
+	"Executed:Set Locale and Region US" | Out-File -FilePath C:\Temp\shiroscout.log -Append
+	Set-Culture -CultureInfo en-US;
+	International\Set-WinSystemLocale -SystemLocale en-US;
+	International\Set-WinHomeLocation -GeoId 244;
+	International\Set-WinUILanguageOverride -Language en-US;
+	International\Set-WinUserLanguageList en-US -force
+	$statusbar.Text = "Your PC is being set to: Culture-US English; WindowsHomeLocation-US English; LanguageOverride- US English; LanguageList-US English"
+}#end setwindowsculture_Click
+
+
+
+$chkfirewallstatus_Click={
+	#TODO: Place custom script here
+	$richTextBox1.Text =
+	netsh advfirewall show allprofiles state| Microsoft.PowerShell.Utility\Format-Table | Microsoft.PowerShell.Utility\Out-String
+	
+}#end chkfirewallstatus_Click
+
+$toolbar1_ButtonClick=[System.Windows.Forms.ToolBarButtonClickEventHandler]{
+#Event Argument: $_ = [System.Windows.Forms.ToolBarButtonClickEventArgs]
+	#TODO: Place custom script here
+	
+}#end toolbar1_ButtonClick
+
+
+
+$publicIP_Click={
+	#TODO: Place custom script here
+	Microsoft.PowerShell.Utility\Invoke-RestMethod -Uri https://ipinfo.io
+}#end publicIP_Click
+
+$ListAllOUS_Click={
+	#TODO: Place custom script here
+	ActiveDirectory\Get-ADOrganizationalUnit -Filter * -Properties * | Microsoft.PowerShell.Utility\Select-Object CanonicalName, DistinguishedName
+}#end ListAllOUS_Click
+
+$LockedADaccounts_Click={
+	#TODO: Place custom script here
+	ActiveDirectory\Get-ADUser -Filter * -Properties LockedOut | Microsoft.PowerShell.Utility\Select-Object Name, SamAccountName, LockedOut
+}#end LockedADaccounts_Click
+
+$LastUserLogon_Click={
+	#TODO: Place custom script here
+	ActiveDirectory\Get-ADUser -Filter * -Properties LastLogonDate | Microsoft.PowerShell.Utility\Select-Object Name, SamAccountName, LastLogonDate
+}#end LastUserLogon_Click
+
+$DcAndIP_Click={
+	#TODO: Place custom script here
+	"Executed:DC and IP Click" | Out-File -FilePath C:\Temp\shiroscout.log -Append
+	ActiveDirectory\Get-ADGroupMember "Domain Controllers" | Microsoft.PowerShell.Core\ForEach-Object{ DnsClient\Resolve-DnsName -Name $_.Name } | Microsoft.PowerShell.Utility\Select-Object Name, IPAddress
+}#end DcAndIP_Click
+
+$EmptyRecycleBin_Click={
+	#TODO: Place custom script here
+	"Executed:Empty Recycle Bin" | Out-File -FilePath C:\Temp\shiroscout.log -Append
+	Microsoft.PowerShell.Management\Clear-RecycleBin -Force -DriveLetter C
+}#end EmptyRecycleBin_Click
+
+
+$buttonNetRuntime702_Click={
+	#TODO: Place custom script here
+	"Executed:Dot Net 7 Runtime" | Out-File -FilePath C:\Temp\shiroscout.log -Append
+	$richTextBox1.Text =
+	powershell choco install dotnet-runtime | Microsoft.PowerShell.Utility\Format-Table | Microsoft.PowerShell.Utility\Out-String
+	$statusbar.Text = "Downloading and installing runtime. Installation will be executed and will take 1-2 minutes."
+}#end buttonNetRuntime702_Click
+
+$button58_Click={
+	#TODO: Place custom script here
+	"Executed:Chocolatey Install" | Out-File -FilePath C:\Temp\shiroscout.log -Append
+	$richTextBox1.Text =
+	powershell Set-ExecutionPolicy Bypass -Scope Process -Force; Microsoft.PowerShell.Utility\Invoke-WebRequest https://community.chocolatey.org/install.ps1 -UseBasicParsing | Microsoft.PowerShell.Utility\Invoke-Expression | Microsoft.PowerShell.Utility\Format-Table | Microsoft.PowerShell.Utility\Out-String
+	$statusbar.Text = "Installation has been executed and will take 1-2 minutes."
+	
+}#end button58_Click
+
+$buttonJavaRuntime80351_Click={
+	#TODO: Place custom script here
+	"Executed:Java Runtime" | Out-File -FilePath C:\Temp\shiroscout.log -Append
+	$richTextBox1.Text =
+	powershell choco install jre8 | Microsoft.PowerShell.Utility\Format-Table | Microsoft.PowerShell.Utility\Out-String
+	$statusbar.Text = "Installation has been executed and will take 3-4 minutes."
+}#end buttonJavaRuntime80351_Click
+
+$buttonVisualStudioCode_Click={
+	#TODO: Place custom script here
+	"Executed:Visual Studio Code" | Out-File -FilePath C:\Temp\shiroscout.log -Append
+	$richTextBox1.Text =
+	powershell choco install vscode | Microsoft.PowerShell.Utility\Format-Table | Microsoft.PowerShell.Utility\Out-String
+	$statusbar.Text = "Installation has been executed and will take 3-4 minutes."
+}#end buttonVisualStudioCode_Click
+
+$buttonChocolateyGUI_Click={
+	#TODO: Place custom script here
+	"Executed:Chocolatey GUI" | Out-File -FilePath C:\Temp\shiroscout.log -Append
+	$richTextBox1.Text =
+	powershell choco install chocolateygui | Microsoft.PowerShell.Utility\Format-Table | Microsoft.PowerShell.Utility\Out-String
+	$statusbar.Text = "The Chocolatey GUI will ease the use of standard commandline Chocolatey."
+}#end buttonChocolateyGUI_Click
+
+$buttonGetFullAssetReport_Click = {
+	"Executed:Full HTML Asset Report" | Out-File -FilePath C:\Temp\shiroscout.log -Append
+	<#$this.Enabled = $False
+	$richTextBox1.SelectAll();
+	$richTextBox1.Clear();
+	# Output a message on click
+	$richtextbox1.AppendText("The button has been disabled and will be re-enabled when process completes. You may see CMD Prompt or PowerShell Windows during the report creation process.")
+	# Simulate work
+	Microsoft.PowerShell.Utility\Start-Sleep -Seconds 4
+	# Process the pending messages before enabling the button
+	[System.Windows.Forms.Application]::DoEvents()#>
+	$richTextBox1.Text =
+	Microsoft.PowerShell.Management\Start-Process PowerShell.exe "-noexit", '. .\ImportPs1\FullPCAssetReport.ps1' | Microsoft.PowerShell.Utility\Format-Table | Microsoft.PowerShell.Utility\Out-String
+	
+	<#$richtextbox1.Text = "A resource intensive report builder has been started, please wait."
+	$this.Enabled = $True
+	$statusbar.Text = "This is an extensive report and takes several minutes to complete and you can view the complete html report from folder C:\temp"#>
+
+}#end buttonGetFullAssetReport_Click
+
+$buttonAboutThisPC_Click={
+	#TODO: Place custom script here
+	"Executed:About this PC" | Out-File -FilePath C:\Temp\shiroscout.log -Append
+	$richTextBox1.Text =
+	Get-CimInstance -ClassName Win32_ComputerSystem | Format-List | Out-String
+	$statusbar.Text = "Gather PC Info or Full Report has even more information if you need it."
+}#end buttonAboutThisPC_Click
+
+$buttonInstalledHotFixes_Click={
+	#TODO: Place custom script here
+	"Executed:HotFixes" | Out-File -FilePath C:\Temp\shiroscout.log -Append
+	$richTextBox1.Text =
+	Get-CimInstance -ClassName Win32_QuickFixEngineering -Property HotFixId | Format-Table -Property "HotFixId" | Out-String
+	Select-Object -Property HotFixId
+	$statusbar.Text = "HotFixes are Microsoft Quickly Implemented Security Updates"
+}#end buttonInstalledHotFixes_Click
+
+$buttonListUserAccounts_Click={
+	#TODO: Place custom script here
+	"Executed:List User Accounts" | Out-File -FilePath C:\Temp\shiroscout.log -Append
+	$richTextBox1.Text =
+	Get-LocalUser | Format-Table -Property "Name"| Out-String
+	$statusbar.Text = "User Accounts may be people or often a service account."
+}#end buttonListUserAccounts_Click
+
+$buttonListGroupAccounts_Click={
+	#TODO: Place custom script here
+	"Executed:List Group Accounts" | Out-File -FilePath C:\Temp\shiroscout.log -Append
+	$richTextBox1.Text =
+	 Get-LocalGroup | Format-Table -Property "Name" | Out-String
+	$statusbar.Text = "Groups are used to control access to a system or resource."
+}#end buttonListGroupAccounts_Click
+
+$buttonListAllNonMicrosoft_Click={
+	#TODO: Place custom script here
+	"Executed:List Non-Microsoft Software" | Out-File -FilePath C:\Temp\shiroscout.log -Append
+	$this.Enabled = $False
+	$richTextBox1.SelectAll();
+	$richTextBox1.Clear();
+	# Output a message on click
+	$richtextbox1.AppendText("The button has been disabled and will be re-enabled when process completes.")
+	
+	# Simulate work
+	Microsoft.PowerShell.Utility\Start-Sleep -Seconds 4
+	
+	# Process the pending messages before enabling the button
+	[System.Windows.Forms.Application]::DoEvents()
+	
+	
+	
+	$statusbar.Text = "OK, drink your strawberry-lemonade tea and sit in the shade...I'll be back. Give me like 30 seconds."
+	$richtextbox1.Text = "A resource intensive search has been started, please wait."
+	$richTextBox1.Text =
+	#Invoke-Command -ScriptBlock { Get-ItemProperty "HKLM:\Software\Microsoft\Windows\CurrentVersion\Uninstall\*" | Select-Object DisplayName } | Format-Table -Property "DisplayName" | Out-String
+	Get-CimInstance -Query "SELECT * FROM Win32_Product Where Not Vendor Like '%Microsoft%'" | Format-Table -Property "Caption", "Version" | Out-String
+	$statusbar.Text = "BOOM BOOM DONE!"
+	$this.Enabled = $True
+
+}#end buttonListAllNonMicrosoft_Click
+
+$buttonFixMicrosoftStoreApp_Click={
+	#TODO: Place custom script here
+	"Executed:Fix Microsoft Store Apps" | Out-File -FilePath C:\Temp\shiroscout.log -Append
+	$richTextBox1.Text =
+	WSReset
+	$statusbar.Text = "This deletes and rebuilds your installed Microsoft Store Apps"
+} #end buttonFixMicrosoftStoreApp_Click
+
+$buttonSetupReputationContr_Click={
+	#TODO: Place custom script here
+	"Executed:App Reputation Control" | Out-File -FilePath C:\Temp\shiroscout.log -Append
+	$richTextBox1.Text =
+	powershell Set-MpPreference -PUAProtection Enabled
+	$statusbar.Text = "The protection has been enabled but futher configuration is needed at Start>Settings>Windows Security>App & Browser Control" | Out-String
+}#end buttonSetupReputationContr_Click
+
+$buttonSetupExploitProtecti_Click={
+	#TODO: Place custom script here
+	"Executed:App Exploit Protection" | Out-File -FilePath C:\Temp\shiroscout.log -Append
+	$richTextBox1.Text =
+	powershell Set-MpPreference -EnableNetworkProtection Enabled
+	$statusbar.Text = "The protection has been enabled but futher configuration is needed at Start>Settings>Windows Security>App & Browser Control" | Out-String
+}#end buttonSetupExploitProtecti_Click
+
+$buttonOpenMySandbox_Click={
+	#TODO: Place custom script here
+	"Executed:Windows Sandbox" | Out-File -FilePath C:\Temp\shiroscout.log -Append
+	$this.Enabled = $False
+	$richTextBox1.SelectAll();
+	$richTextBox1.Clear();
+	# Output a message on click
+	$richtextbox1.AppendText("The button has been disabled and will be re-enabled when process completes.")
+	
+	# Simulate work
+	Microsoft.PowerShell.Utility\Start-Sleep -Seconds 4
+	
+	# Process the pending messages before enabling the button
+	[System.Windows.Forms.Application]::DoEvents()
+	
+	
+	$statusbar.Text = "OK,Done, but please wait about 1 minute for the Sandbox and Desktop to fully load."
+	$richtextbox1.Text = "The Sandbox Virtual Machine is being configured and will launch shortly."
+	#Invoke-Command -ScriptBlock { Get-ItemProperty "HKLM:\Software\Microsoft\Windows\CurrentVersion\Uninstall\*" | Select-Object DisplayName } | Format-Table -Property "DisplayName" | Out-String
+	powershell Enable-WindowsOptionalFeature -FeatureName "Containers-DisposableClientVM" -All -Online | Out-String
+	WindowsSandbox.exe
+	$statusbar.Text = "Wise Choice!"
+	$this.Enabled = $True
+
+}#end buttonOpenMySandbox_Click
+
+
+
+$buttonUseIsolatedBrowser_Click={
+	#TODO: Place custom script here
+	"Executed:Isolated Browser" | Out-File -FilePath C:\Temp\shiroscout.log -Append
+	$richTextBox1.Text =
+	powershell Enable-WindowsOptionalFeature -Online -FeatureName Windows-Defender-ApplicationGuard
+	$statusbar.Text = "The protection has been enabled but futher configuration is needed at Start>Settings>Windows Security>App & Browser Control" 
+}#end buttonUseIsolatedBrowser_Click
+
+$buttonViewInstalledUpdates_Click={
+	#TODO: Place custom script here
+	"Executed:View Installed Windows Updates" | Out-File -FilePath C:\Temp\shiroscout.log -Append
+	$richTextBox1.Text =
+	Get-CimInstance -ClassName Win32_QuickFixEngineering -Property HotFixId | Format-Table | Out-String
+}#end buttonViewInstalledUpdates_Click
+
+$buttonCheckRebootStatus_Click={
+	#TODO: Place custom script here
+	"Executed:Windows Reboot Status" | Out-File -FilePath C:\Temp\shiroscout.log -Append
+	$richTextBox1.Text =
+	Get-WURebootStatus | Format-Table -Property "RebootRequired" | Out-String
+}#end buttonCheckRebootStatus_Click
+
+$buttonInstallAllUpdates_Click={
+	#TODO: Place custom script here
+	"Executed:Install all Windows Updates" | Out-File -FilePath C:\Temp\shiroscout.log -Append
+	$richTextBox1.Text =
+	Start-Job { Get-WindowsUpdate -AcceptAll -Install -IgnoreReboot } | Out-String
+	$statusbar.Text = "All Microsoft Windows Updates will be downloaded and installed."
+}#end buttonInstallAllUpdates_Click
+
+$buttonInstallSecurityUpdat_Click = {
+	"Executed:Install Windows Security Updates" | Out-File -FilePath C:\Temp\shiroscout.log -Append
+	#TODO: Place custom script here
+	$richTextBox1.Text =
+	Get-WindowsUpdate -Category "Security Updates" -AcceptAll -Install -IgnoreReboot | Out-String
+	$statusbar.Text = "All Windows Security Updates will be downloaded and installed."
+}#end buttonInstallSecurityUpdat_Click
+
+$buttonInstallCriticalUpdat_Click={
+	#TODO: Place custom script here
+	"Executed:List User Accounts" | Out-File -FilePath C:\Temp\shiroscout.log -Append
+	$richTextBox1.Text =
+	Get-WindowsUpdate -Category "Critical Updates" -AcceptAll -Install -IgnoreReboot | Out-String
+	$statusbar.Text = "All Windows Critical Updates will be downloaded and installed."
+}#end buttonInstallCriticalUpdat_Click
+
+$buttonSetDefaultSettings_Click={
+	#TODO: Place custom script here
+	"Executed:Restore Windows Update Default Settings" | Out-File -FilePath C:\Temp\shiroscout.log -Append
+	$richTextBox1.Text =
+	Reset-WUComponents | Out-String
+	$statusbar.Text = "Microsoft Windows Update settings have been reset to thier default settings."
+}#end buttonSetDefaultSettings_Click
+
+$buttonCheckUpdatingStatus_Click={
+	#TODO: Place custom script here
+	"Executed:Check Windows Update Status" | Out-File -FilePath C:\Temp\shiroscout.log -Append
+	$richTextBox1.Text =
+	Get-WUInstallerStatus | Out-String
+	$statusbar.Text = "We are checking if Windows Updates is currently getting updates."
+}#end buttonCheckUpdatingStatus_Click
+
+$buttonRebootComputer_Click={
+	#TODO: Place custom script here
+	"Executed:Windows RebootWindows Button Funny" | Out-File -FilePath C:\Temp\shiroscout.log -Append
+	$this.Enabled = $False
+	$richTextBox1.SelectAll();
+	$richTextBox1.Clear();
+	# Output a message on click
+	$richtextbox1.AppendText("The button has been disabled and will be re-enabled after messaging complete.")
+	
+	# Simulate work
+	Microsoft.PowerShell.Utility\Start-Sleep -Seconds 4
+	
+	# Process the pending messages before enabling the button
+	[System.Windows.Forms.Application]::DoEvents()
+	
+	
+	
+	$statusbar.Text = "Um, Boss, I don't think this button does anything..."
+	$richtextbox1.Text = "Save all files, close all apps. Go to START>POWER>RESTART to properly restart the computer."
+	$richTextBox1.Text =
+	Start-Sleep -Seconds 4
+	$statusbar.Text = "You have been saved from a dangerous reboot practice my friend."
+	$this.Enabled = $True
+}#end buttonRebootComputer_Click
+
+$buttonInstallPowerShell7_Click={
+	#TODO: Place custom script here
+	"Executed:Install PowerShell Version 7" | Out-File -FilePath C:\Temp\shiroscout.log -Append
+	$richTextBox1.Text =
+	powershell choco install powershell-core | Out-String
+}#end buttonCRedistBundle_Click
+
+$buttonCRedistBundle_Click={
+	#TODO: Place custom script here
+	"Executed:Install C++ Redist Bundle" | Out-File -FilePath C:\Temp\shiroscout.log -Append
+	$richTextBox1.Text =
+	powershell choco install vcredist140 | Out-String
+}#end buttonCRedistBundle_Click
+
+$buttonRowserAndMSTeamsClea_Click={
+	#TODO: Place custom script here
+	"Executed:Microsoft Teams Cleanup" | Out-File -FilePath C:\Temp\shiroscout.log -Append
+	$richTextBox1.Text =
+	Get-ChildItem "C:\Users\$env:UserName\AppData\Roaming\Microsoft\Teams\*" -directory | Where-Object name -in ('application cache', 'blob storage', 'databases', 'GPUcache', 'IndexedDB', 'Local Storage', 'tmp') | ForEach-Object{ Remove-Item $_.FullName -Recurse -Force }
+} #end buttonRowserAndMSTeamsClea_Click
+
+$buttonOpenXMLCoverter_Click={
+	#TODO: Place custom script here
+	Microsoft.PowerShell.Management\Start-Process PowerShell.exe "-noexit", '. .\ImportPs1\OpenXMLConverter.ps1'
+}#end buttonOpenXMLCoverter_Click
