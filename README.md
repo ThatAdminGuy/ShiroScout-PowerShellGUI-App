@@ -28,4 +28,16 @@
 
 ### I think there are close to 150 references I could add, but in general I would like to thank ALL people who post their learning, findings, testing, Home IT Labs, and share knowledge online as it is an invaluable tool of sharing that has helped code, automation and many other areas of our entire world as we know it.
 
+ABOUT: Shiro the Indian Boy
+
+Shiro is a happy boy. He loves his mom, dad, and sisters. He helps in the community. His world is bliss and he is happy and content in it.
+
+Shiro Scout was created by myself because of inspiration from Apache Shiro and their use of: Domains, Regions, Entities. So, Shiro the protector of Realms was my thought.
+
+Scout because he would Scout the Regions looking for Danger, or potential enemies.
+
+The photo of Shiro Scout was originally different, but I wanted a mascot picture and logo for Shiro Scout Usage on projects. I used MidJourney, and Shiro Scout was born in Graphical Representation in about 20 seconds using specific text-prompts.
+
+![A person smiling for the camera Description automatically generated with medium confidence](media/c3b25b148d6d7434af8faa0727c02e56.png)
+
 ![Graphical user interface, text Description automatically generated](media/aa99d920f08ff2e5982cb78592462d3b.png)![Graphical user interface Description automatically generated with medium confidence](media/6858bc75a0e6e12cca387562fe58da37.png)![Graphical user interface, website Description automatically generated](media/5948b6e2ac1f131d6bb20f20d1b80262.png)![Graphical user interface, calendar Description automatically generated](media/1be63afdd6e2caaa26dc3fc086c4a44b.png)![Graphical user interface, website Description automatically generated](media/8ece661525b8f7e775f96817371c12ab.png)![Graphical user interface, application Description automatically generated](media/f9ff4d783ac47e275521362f1b2651d4.png)![A picture containing graphical user interface Description automatically generated](media/21f697e1fec227243dbdb59bafee844a.png)![Graphical user interface Description automatically generated with medium confidence](media/9e09b1f2e9a47efcfb9d8da9ae63cffa.png)
