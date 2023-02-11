@@ -6,6 +6,8 @@
 
 ### It is best used for Help Desk, or internal corporate of business IT Support where they can run the program using RDP or similar tools.
 
+### The demo.pdf is just an example of what can be gathered in less than 2 minutes. There is also a HTML Report that another author created and gives a full report, but this takes 5-20 minutes to generate.
+
 ### Within just a few minutes support personnel can gather large information about a specific pc, settings, apps, log files, and use that info right then for fixing issues or post as notes or attachment in a ticketing system for higher tier support to use.
 
 ### I address, what I consider after 24 years of desktop support the most crucial items, and fast resolve to root cause. There is an infinity of possibilities, and this is not a fix-all app, it is a fix-most-likely cause app asap.
